@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenha um Aplicativo Próprio Personalizado</title>
+    <style>
+        /* Reset básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a; /* Fundo quase preto como na imagem */
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Garante que o formulário fique centralizado verticalmente */
+            padding: 20px; /* Adiciona um padding geral para telas menores */
+        }
+
+        .form-container {
+            background-color: #2c2c2c; /* Fundo mais claro para o container do formulário */
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            max-width: 500px; /* Largura máxima para o formulário */
+            width: 100%;
+        }
+
+        .form-container h2 {
+            font-size: 2.2rem;
+            color: #e0b020; /* Dourado */
+            text-align: center;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .form-container h2 span {
+            color: #fff; /* "da sua barbearia!" em branco */
+        }
+
+        .form-container p.subtitle {
+            font-size: 0.95rem;
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="tel"],
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #3e3e3e; /* Cor do campo de input */
+            border: 1px solid #555;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input[type="text"]::placeholder,
+        .form-group input[type="tel"]::placeholder,
+        .form-group input[type="number"]::placeholder {
+            color: #bbb; /* Cor do placeholder */
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="tel"]:focus,
+        .form-group input[type="number"]:focus {
+            border-color: #e0b020; /* Borda dourada no foco */
+        }
+
+        /* Estilização específica para inputs de número com spinners */
+        .form-group input[type="number"] {
+            -moz-appearance: textfield; /* Firefox */
+        }
+        .form-group input[type="number"]::-webkit-outer-spin-button,
+        .form-group input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Botão de envio */
+        .submit-button {
+            width: 100%;
+            padding: 15px 20px;
+            background-color: #e0b020; /* Dourado */
+            color: #1a1a1a; /* Texto escuro no botão */
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .submit-button:hover {
+            background-color: #c99a00; /* Dourado mais escuro no hover */
+            color: #000;
+        }
+
+        /* Responsividade */
+        @media (max-width: 600px) {
+            .form-container {
+                padding: 30px 20px;
+            }
+
+            .form-container h2 {
+                font-size: 1.8rem;
+            }
+
+            .form-container p.subtitle {
+                font-size: 0.85rem;
+                margin-bottom: 25px;
+            }
+
+            .form-group label {
+                font-size: 1rem;
+            }
+
+            .form-group input {
+                padding: 10px 12px;
+                font-size: 0.95rem;
+            }
+
+            .submit-button {
+                padding: 12px 15px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Tenha um Aplicativo <br> <span style="color: #e0b020;">Próprio Personalizado</span> <br> da sua barbearia!</h2>
+        <p class="subtitle">Preencha o formulário abaixo e receba uma oferta exclusiva.</p>
+
+        <form action="#" method="POST">
+            <div class="form-group">
+                <label for="nomeBarbearia">Nome da Barbearia</label>
+                <input type="text" id="nomeBarbearia" name="nomeBarbearia" placeholder="Nome da Barbearia" required>
+            </div>
+
+            <div class="form-group">
+                <label for="nomeDono">Nome do Dono da barbearia</label>
+                <input type="text" id="nomeDono" name="nomeDono" placeholder="Nome do Dono da barbearia" required>
+            </div>
+
+            <div class="form-group">
+                <label for="whatsappDono">WhatsApp do Dono da barbearia</label>
+                <input type="tel" id="whatsappDono" name="whatsappDono" placeholder="Celular (WhatsApp) do Dono da barbearia" required>
+            </div>
+
+            <div class="form-group">
+                <label for="faturamentoMedio">Faturamento médio mensal (R$)</label>
+                <input type="number" id="faturamentoMedio" name="faturamentoMedio" placeholder="Quanto sua barbearia vende em média por mês" min="0" step="any" required>
+            </div>
+
+            <div class="form-group">
+                <label for="numColaboradores">Número de colaboradores</label>
+                <input type="number" id="numColaboradores" name="numColaboradores" placeholder="Quantos colaboradores tem na sua barbearia" min="1" required>
+            </div>
+
+            <button type="submit" class="submit-button">Quero um App Personalizado!</button>
+        </form>
+    </div>
+</body>
+</html>
