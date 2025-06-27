@@ -3,5 +3,5 @@ from django.urls import path
 from cms.views import index
 
 urlpatterns = [
-    path('', index, name='index'),
+    path('/cms', index, name='index'),
 ]
