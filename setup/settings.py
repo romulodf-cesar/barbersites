@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cms',
-    'crm'
+    'crm',
 ]
 
 MIDDLEWARE = [
@@ -76,14 +76,21 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent # Esta é a linha crucial para BASE_DIR
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.sqlite3',  # Define o motor do banco de dados como SQLite
+        'NAME': BASE_DIR / 'db.sqlite3',       # Define o caminho completo para o arquivo do banco de dados SQLite.
+                                               # BASE_DIR é uma variável do Django que aponta para a raiz do seu projeto.
+                                               # Isso criará (ou usará) um arquivo chamado db.sqlite3 na raiz do seu projeto.
     }
 }
 
+# Esta linha é opcional, mas recomendada se estiver usando Django 3.2 ou superior.
+# Garante que os campos de chave primária auto-gerados sejam BigAutoField (64-bit inteiro)
+# para evitar problemas de esgotamento de IDs em projetos maiores.
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
