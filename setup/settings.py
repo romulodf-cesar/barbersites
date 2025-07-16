@@ -77,15 +77,39 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent # Esta é a linha crucial para BASE_DIR
+#BASE_DIR = Path(__file__).resolve().parent.parent # Esta é a linha crucial para BASE_DIR
+#DATABASES = {
+ #   'default': {
+ #       'ENGINE': 'django.db.backends.sqlite3',  # Define o motor do banco de dados como SQLite
+ #       'NAME': BASE_DIR / 'db.sqlite3',       # Define o caminho completo para o arquivo do banco de dados SQLite.
+ #                                              # BASE_DIR é uma variável do Django que aponta para a raiz do seu projeto.
+ #                                              # Isso criará (ou usará) um arquivo chamado db.sqlite3 na raiz do seu projeto.
+ #   }
+#}
+
+# Seu arquivo settings.py
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Define o motor do banco de dados como SQLite
-        'NAME': BASE_DIR / 'db.sqlite3',       # Define o caminho completo para o arquivo do banco de dados SQLite.
-                                               # BASE_DIR é uma variável do Django que aponta para a raiz do seu projeto.
-                                               # Isso criará (ou usará) um arquivo chamado db.sqlite3 na raiz do seu projeto.
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'barbearia_db',
+        'USER': 'root',
+        'PASSWORD': 'senac',
+        'HOST': 'localhost',  # Ou o IP do seu servidor MySQL, se não for local
+        'PORT': '3307',      # A porta padrão do MySQL. Mude se for diferente
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
     }
 }
+
+
+
+
+
+
+
+
 
 # Esta linha é opcional, mas recomendada se estiver usando Django 3.2 ou superior.
 # Garante que os campos de chave primária auto-gerados sejam BigAutoField (64-bit inteiro)

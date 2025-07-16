@@ -1,3 +1,5 @@
+
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -164,8 +166,21 @@
             <div class="sticky-top" style="top: 20px;">
                 <div class="card p-4 shadow-lg" style="background-color: #F8F4E3; border-radius: 15px;">
                     <div class="card-body text-dark">
-                        <h5 class="card-title fw-bold mb-4">Resumo do Pedido</h5>
-
+                        <h5 class="card-title fw-bold mb-4">Escolha seu Plano</h5>
+                        <div class="mb-3">
+                            <label for="planoSelecionado" class="form-label">Plano Contratado <span class="text-danger">*</span></label>
+                            <select class="form-select" id="planoSelecionado" name="plano_id" required>
+                                <option selected disabled value="">Selecione um plano</option>
+                                {# Itere sobre os planos passados do Django View #}
+                                {% for plano in planos %}
+                                    <option value="{{ plano.id }}" data-valor="{{ plano.valor|floatformat:2 }}" data-descricao="{{ plano.descricao|default_if_none:'' }}">
+                                        {{ plano.nome_plano }} - R$ {{ plano.valor|floatformat:2 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">Selecione o plano ideal para sua barbearia.</small>
+                        </div>
+                    
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-secondary">Plano Profissional</span>
                             <span class="fw-bold">R$ 197</span>
