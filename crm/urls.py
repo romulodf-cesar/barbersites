@@ -1,10 +1,15 @@
 from django.contrib import admin
 from django.urls import path
-from crm.views import index,checkout,checkout_view
+from . import views
+
 
 urlpatterns = [
-    path('', index, name='index'),
-    path('checkout/', checkout, name='checkout'),  # Assuming checkout uses the same view for simplicity
-    path('checkout_view',checkout_view, name='checkout_view'),  # Adjusted to match the view function
+    # Rota para a página inicial, que lista os planos.
+    # Nome 'home' é uma convenção comum para a página principal.
+    path('', views.index, name='home'), 
+    # Rota para a página de checkout.
+    # Aceita um ID de plano inteiro na URL, que é passado para a view.
+    # Nome 'checkout' é usado na tag {% url %} do template.
+    path('checkout/<int:plano_id>/', views.checkout_plano, name='checkout'),
     path('admin/', admin.site.urls),
 ]
