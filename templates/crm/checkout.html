@@ -134,6 +134,16 @@
                                     Detalhes do Plano Selecionado
                                 </div>
                                 <div class="card-body">
+                                    {% csrf_token  %}
+                                    Mostrando campos visiveis do formulario
+                                    <div class="row">
+                                        {% for field in form.visible_fields %}
+                                            <div>
+                                                <label for="{{field.id_for_label}}">{{field}}</label>
+                                                {{field}}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
                                     <h5 class="card-title">Plano - {{ plano_selecionado.nome_plano }}</h5>
                                     <p class="card-text">
                                         Valor: R$ {{ plano_selecionado.valor|floatformat:2 }} <br> 

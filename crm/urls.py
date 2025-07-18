@@ -10,6 +10,6 @@ urlpatterns = [
     # Rota para a página de checkout.
     # Aceita um ID de plano inteiro na URL, que é passado para a view.
     # Nome 'checkout' é usado na tag {% url %} do template.
-    path('checkout/<int:plano_id>/', views.checkout_plano, name='checkout'),
+    path('checkout/<int:plano_id>/', views.checkout_plano,name='checkout'),
     path('admin/', admin.site.urls),
 ]
