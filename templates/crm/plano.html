@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>    
+    {% csrf_token  %}
+    Mostrando campos visiveis do formulario
+    <div class="row">
+        {% for field in form.visible_fields %}
+            <div>
+                <label for="{{field.id_for_label}}"></label>
+                {{field}}
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

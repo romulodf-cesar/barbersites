@@ -12,4 +12,5 @@ urlpatterns = [
     # Nome 'checkout' é usado na tag {% url %} do template.
     path('checkout/<int:plano_id>/', views.checkout_plano,name='checkout'),
     path('admin/', admin.site.urls),
+    path('plano/', views.plano_form, name='plano_form'),
 ]

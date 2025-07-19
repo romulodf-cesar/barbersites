@@ -38,3 +38,9 @@ def checkout_plano(request, plano_id):
         'form': form, # Passe o formulário para o contexto
     }
     return render(request, 'crm/checkout.html', context)
+
+
+def plano_form(request):
+    form = PlanoForms()
+    return render(request, 'crm/plano.html', {'form': form})
+
