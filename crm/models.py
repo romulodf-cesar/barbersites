@@ -4,7 +4,7 @@ from django.db import models
 class Plano(models.Model):
     # O 'id' é gerado automaticamente pelo Django como Primary Key (id).
     # Não precisamos declará-lo explicitamente.
-
+    
     nome_plano = models.CharField(
         max_length=100,
         verbose_name="Nome do Plano",
@@ -34,6 +34,7 @@ class Plano(models.Model):
     def __str__(self):
         # Representação textual de um objeto Plano
         return self.nome_plano
+    
     
 
 # Já existe:

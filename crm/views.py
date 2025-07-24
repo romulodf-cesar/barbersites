@@ -66,6 +66,5 @@ def criar_plano(request): # Renomeei a função para deixar o propósito mais cl
     
     return render(request, 'crm/plano.html', {'form': form})
 
-def criar_plano(request):
-    pass
+
 
