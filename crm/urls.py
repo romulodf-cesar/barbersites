@@ -13,4 +13,5 @@ urlpatterns = [
     path('checkout/<int:plano_id>/', views.checkout_plano,name='checkout'),
     path('admin/', admin.site.urls),
     path('plano/', views.plano_form, name='plano_form'),
+    path('criar/', views.criar_plano, name='criar_plano'), # URL para processar o formulário
 ]
