@@ -17,6 +17,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='plano',
             name='descricao',
-            field=models.TextField(blank=True, null=True, verbose_name='Descrição'),
+            field=models.TextField(
+                blank=True, null=True, verbose_name='Descrição'
+            ),
         ),
     ]

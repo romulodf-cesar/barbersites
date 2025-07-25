@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Escolha seu Plano de Assinatura</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .plan-card { border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: 20px auto; text-align: center; }
+        .plan-option { border: 1px solid #eee; padding: 15px; margin-top: 10px; background-color: #f9f9f9; }
+        button { background-color: #6772e5; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background-color: #5469d4; }
+    </style>
+</head>
+<body>
+    <div class="plan-card">
+        <h1>Nossos Planos de Assinatura</h1>
+
+        {% for plano_option in planos %}
+            <div class="plan-option">
+                <h3>{{ plano_option.nome_plano }}</h3>
+                <p>{{ plano_option.descricao }}</p>
+                <p>Valor: {{ plano_option.valor|stringformat:"%.2f" }} BRL / {{ plano_option.get_interval_display|lower }}</p>
+                {% if plano_option.trial_period_days > 0 %}
+                    <p style="color: green;">Primeiros {{ plano_option.trial_period_days }} dias grátis!</p>
+                {% endif %}
+
+                {% if plano_option.stripe_price_id %}
+                    <button class="checkout-button" data-plano-id="{{ plano_option.pk }}">
+                        Assinar agora
+                    </button>
+                {% else %}
+                    <p style="color: red;">Este plano não está configurado para pagamentos. (Faltando Stripe Price ID)</p>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p>Nenhum plano disponível no momento.</p>
+        {% endfor %}
+    </div>
+
+    <script type="text/javascript">
+        // Inicializa o objeto Stripe com sua chave pública.
+        var stripe = Stripe('{{ STRIPE_PUBLIC_KEY }}');
+        var checkoutButtons = document.querySelectorAll('.checkout-button');
+
+        checkoutButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const planoId = this.dataset.planoId;
+
+                fetch(`/payments/create-checkout-session/${planoId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.error || 'Erro desconhecido ao criar sessão.'); });
+                    }
+                    return response.json();
+                })
+                .then(session => {
+                    if (session.error) {
+                        alert(session.error);
+                    } else {
+                        return stripe.redirectToCheckout({ sessionId: session.id });
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Ocorreu um erro ao iniciar o checkout: ' + error.message);
+                });
+            });
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

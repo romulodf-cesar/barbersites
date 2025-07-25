@@ -3,7 +3,7 @@ Em que situação podemos usar uma nova camada forms no Django.
 
 Resposta:
 
-Em várias situações, principalmente quando precisar de validação de dados, 
+Em várias situações, principalmente quando precisar de validação de dados,
 limpeza de dados e renderização de formulários.
 
 Veja as principais situações:
@@ -59,8 +59,8 @@ class UsuarioForm(forms.ModelForm):
             'aceite_termos': 'Aceitou os Termos de Uso',
             'receber_notificacoes': 'Deseja receber notificações?',
         }
-class AssinaturaForm(forms.ModelForm):  
-    class Meta: 
+class AssinaturaForm(forms.ModelForm):
+    class Meta:
         model = Assinatura
         fields = ['usuario', 'barbearia', 'plano']
         widgets = {
@@ -73,30 +73,32 @@ class AssinaturaForm(forms.ModelForm):
             'barbearia': 'Barbearia',
             'plano': 'Plano',
         }
-
 """
 
-# Orientação a Objetos 
+# Orientação a Objetos
 
 from django import forms
+
 from .models import Plano
+
+
 # Herança de classes
 class PlanoForms(forms.Form):
     nome_plano = forms.CharField(
-        max_length=100, # quantidade de caracteres
-        required=True, # campo obrigatório
+        max_length=100,  # quantidade de caracteres
+        required=True,  # campo obrigatório
         widget=forms.TextInput(attrs={'class': 'form-control'}),
-        label='Nome do Plano' # rótulo do campo
+        label='Nome do Plano',  # rótulo do campo
     )
     valor = forms.DecimalField(
-        max_digits=10, # número máximo de dígitos
-        decimal_places=2, # número de casas decimais
-        required=True, # campo obrigatório
+        max_digits=10,  # número máximo de dígitos
+        decimal_places=2,  # número de casas decimais
+        required=True,  # campo obrigatório
         widget=forms.NumberInput(attrs={'class': 'form-control'}),
-        label='Valor do Plano' # rótulo do campo
+        label='Valor do Plano',  # rótulo do campo
     )
     descricao = forms.CharField(
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        required=False, # campo opcional
-        label='Descrição do Plano' # rótulo do campo
+        required=False,  # campo opcional
+        label='Descrição do Plano',  # rótulo do campo
     )

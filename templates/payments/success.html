@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Bem-Sucedido!</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #f0f8ff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #28a745; }
+        p { margin-bottom: 20px; }
+        .details { background-color: #e6ffe6; padding: 15px; border-radius: 5px; border: 1px solid #c3e6cb; margin-top: 20px; text-align: left; }
+        .details p { margin: 5px 0; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Pagamento Bem-Sucedido!</h1>
+        <p>Sua transação foi processada com sucesso.</p>
+
+        {% if session %}
+            <div class="details">
+                <p><strong>ID da Sessão:</strong> {{ session.id }}</p>
+                <p><strong>Status do Checkout:</strong> {{ session.status }}</p>
+                <p><strong>Cliente:</strong> {{ session.customer_details.email }}</p>
+                {% if session.subscription %}
+                    <p><strong>ID da Assinatura Stripe:</strong> {{ session.subscription }}</p>
+                {% endif %}
+                <p>Você será redirecionado em breve, ou <a href="/">clique aqui para ir para a página inicial</a>.</p>
+            </div>
+        {% else %}
+            <p>Obrigado pelo seu pagamento!</p>
+            <p><a href="/">Voltar para a página inicial</a></p>
+        {% endif %}
+    </div>
+
+    <script>
+        setTimeout(function() {
+            window.location.href = '/'; // Redirecione para sua página inicial ou dashboard do usuário
+        }, 5000); // Redireciona após 5 segundos
+    </script>
+</body>
+</html>

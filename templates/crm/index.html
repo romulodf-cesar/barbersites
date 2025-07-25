@@ -8,7 +8,25 @@
     <title>BarberSites</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr1.11.3/font/bootstrap-icons.min.css">
+    
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        /* Seus estilos CSS */
+        .icon-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #007bff; /* Ou a cor que você preferir */
+        }
+        .icon-arrow {
+            margin-left: 10px;
+            font-size: 1.5rem;
+            color: #ccc;
+        }
+    </style>
 </head>
 
 <body>
@@ -33,7 +51,7 @@
                             <a class="nav-link" href="#">Modelos</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Planos</a>
+                            <a class="nav-link" href="#planos-section">Planos</a> {# Ajustado para rolar para a seção de planos #}
                         </li>
                     </ul>
                 </div>
@@ -108,45 +126,13 @@
                 </div>
 
                 <div class="mt-5">
-                  <a href="#" class="btn btn-warning btn-lg fw-bold">Teste Grátis</a>
+                  <a href="{% url 'list_plans' %}" class="btn btn-warning btn-lg fw-bold">Teste Grátis</a> {# Botão para ir para a lista de planos se não quiser comprar direto #}
                 </div>
             </div>
         </section>
 
-
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            <div class="col">
-                <div class="card h-100">
-                    <img src="template3.png" class="card-img-top" alt="...">
-                    <div class="card-body">
-                        <h5 class="card-title">Barber Premium</h5>
-                        <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-                    </div>
-
-                </div>
-            </div>
-            <div class="col">
-                <div class="card h-100">
-                    <img src="template1.png" class="card-img-top" alt="...">
-                    <div class="card-body">
-                        <h5 class="card-title">Barber Full</h5>
-                        <p class="card-text">This card has supporting text below as a natural lead-in to additional content.</p>
-                    </div>
-
-                </div>
-            </div>
-            <div class="col">
-                <div class="card h-100">
-                    <img src="template2.png" class="card-img-top" alt="...">
-                    <div class="card-body">
-                        <h5 class="card-title">Barber Flash</h5>
-                        <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-        <div class="container py-5">
+        {# Seção de Planos na Index #}
+        <div class="container py-5" id="planos-section"> {# Adicionado ID para navegação #}
             <h2 class="mb-4" style="font-weight: bold; position: relative; display: inline-block; padding-bottom: 10px;">
                 Preços e Planos
                 <span style="position: absolute; left: 0; bottom: 0; width: 60px; height: 4px; background-color: #007bff; border-radius: 2px;"></span>
@@ -164,32 +150,71 @@
 
                 <div class="col-12 col-md-9">
                     <div class="row row-cols-1 row-cols-md-3 g-0">
-                        {% for plano in planos %}
+                        {% for plano in planos %} {# Loop sobre os planos passados pela view #}
                         <div class="col">
                             <div class="card h-100 border-0 rounded-0">
                                 <div class="card-body text-center p-0">
                                     <div class="py-4 border-bottom">
                                         <h5 class="card-title text-uppercase mb-2 text-secondary">{{ plano.nome_plano }}</h5>
                                         <h2 class="card-text display-7 fw-light mb-0">R$ {{ plano.valor|floatformat:2 }}</h2>
+                                        {% if plano.interval %}
+                                            <p class="text-muted small">/ {{ plano.get_interval_display|lower }}</p>
+                                        {% endif %}
+                                        {% if plano.trial_period_days > 0 %}
+                                            <p class="text-success small">Primeiros {{ plano.trial_period_days }} dias grátis!</p>
+                                        {% endif %}
                                     </div>
                                     <div class="d-flex flex-column">
-                                
                                         <div class="py-3 border-bottom text-secondary small">{{ plano.descricao|default:"Sem descrição" }}</div>
-                                  
                                     </div>
                                 </div>
                                 <div class="card-footer bg-white border-top-0 pt-4 pb-4">
                                     <div class="d-grid">
-                                        <a href="{% url 'checkout' plano.id %}" class="btn btn-primary btn-lg rounded-0 shadow-sm">COMPRAR</a>
+                                        {# Botão para redirecionar para a página de checkout personalizada #}
+                                        <a href="{% url 'checkout_page' plano.id %}" class="btn btn-primary btn-lg rounded-0 shadow-sm">COMPRAR / ASSINAR</a>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        {% empty %}
+                            <p class="col-12">Nenhum plano disponível no momento.</p>
                         {% endfor %}
-                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        {# Seção dos Templates (Não alterada, apenas para contexto) #}
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="col">
+                <div class="card h-100">
+                    <img src="{% static 'template3.png' %}" class="card-img-top" alt="..."> {# Corrigido static #}
+                    <div class="card-body">
+                        <h5 class="card-title">Barber Premium</h5>
+                        <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100">
+                    <img src="{% static 'template1.png' %}" class="card-img-top" alt="..."> 
+                    <div class="card-body">
+                        <h5 class="card-title">Barber Full</h5>
+                        <p class="card-text">This card has supporting text below as a natural lead-in to additional content.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100">
+                    <img src="{% static 'template2.png' %}" class="card-img-top" alt="..."> {# Corrigido static #}
+                    <div class="card-body">
+                        <h5 class="card-title">Barber Flash</h5>
+                        <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {# Fim da seção de templates #}
 
         <footer class="bg-light text-center text-lg-start mt-5 py-3">
             <div class="container d-flex justify-content-center justify-content-lg-between align-items-center flex-wrap">
@@ -212,7 +237,9 @@
                 </div>
             </div>
         </footer>
-    </div> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
         crossorigin="anonymous"></script>
 

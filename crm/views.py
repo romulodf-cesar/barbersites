@@ -1,17 +1,21 @@
 from django.shortcuts import get_object_or_404, render
-from .models import Plano
+
 from crm.forms import PlanoForms
 
+from .models import Plano
+
+
 def index(request):
-    """
-    Renderiza a página inicial (Home) exibindo todos os planos disponíveis.
-    Os planos são ordenados pelo valor.
-    """
+    # Pega todos os planos do banco de dados para exibir na landing page
     planos = Plano.objects.all().order_by('valor')
     context = {
         'planos': planos,
+        # Você pode passar outras variáveis se sua index precisar delas
     }
-    return render(request, 'crm/index.html', context)
+    return render(
+        request, 'crm/index.html', context
+    )   # Renderiza a index.html
+
 
 def checkout_plano(request, plano_id):
     plano_selecionado = get_object_or_404(Plano, id=plano_id)
@@ -35,7 +39,7 @@ def checkout_plano(request, plano_id):
     context = {
         'plano_selecionado': plano_selecionado,
         'todos_os_planos': todos_os_planos,
-        'form': form, # Passe o formulário para o contexto
+        'form': form,  # Passe o formulário para o contexto
     }
     return render(request, 'crm/checkout.html', context)
 
@@ -43,4 +47,3 @@ def checkout_plano(request, plano_id):
 def plano_form(request):
     form = PlanoForms()
     return render(request, 'crm/plano.html', {'form': form})
-

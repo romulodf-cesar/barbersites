@@ -7,17 +7,41 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
             name='Plano',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome_plano', models.CharField(max_length=100, verbose_name='Nome do Plano')),
-                ('valor', models.DecimalField(decimal_places=2, max_digits=10, verbose_name='Valor')),
-                ('descricao', models.TextField(blank=True, null=True, verbose_name='Descrição do Plano')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
+                (
+                    'nome_plano',
+                    models.CharField(
+                        max_length=100, verbose_name='Nome do Plano'
+                    ),
+                ),
+                (
+                    'valor',
+                    models.DecimalField(
+                        decimal_places=2, max_digits=10, verbose_name='Valor'
+                    ),
+                ),
+                (
+                    'descricao',
+                    models.TextField(
+                        blank=True,
+                        null=True,
+                        verbose_name='Descrição do Plano',
+                    ),
+                ),
             ],
             options={
                 'verbose_name': 'Plano',
