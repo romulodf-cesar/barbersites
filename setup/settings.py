@@ -99,7 +99,24 @@ DATABASES = {
         'PORT': '3307',      # A porta padrão do MySQL. Mude se for diferente
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        }
+        },
+         'test': { # Adicione esta seção para o banco de dados de teste
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'barbearia_db_test',  # <--- MUITO IMPORTANTE: UM NOME DIFERENTE PARA O BANCO DE DADOS DE TESTE
+        'USER': 'root',
+        'PASSWORD': 'senac',
+        'HOST': 'localhost',
+        'PORT': '3307',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+        'TEST': {
+            'NAME': 'barbearia_db_test', # Garante que o Django use este banco para testes
+            # Opcional: Adicione charset e collation se tiver problemas de codificação
+            'CHARSET': 'utf8mb4',
+            'COLLATION': 'utf8mb4_unicode_ci',
+        },
+      }
     }
 }
 
