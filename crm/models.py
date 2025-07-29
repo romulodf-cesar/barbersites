@@ -117,6 +117,7 @@ class Usuario(models.Model):
         null=False,
         blank=False
     )
+
     
     # Campo para aceitação de termos e notificações
     aceite_termos = models.BooleanField(default=False, verbose_name="Aceitou Termos de Uso")
@@ -146,7 +147,7 @@ class Assinatura(models.Model):
 
     # Opções para o status do usuário (tipo de acesso)
     STATUS_USUARIO_CHOICES = [
-        ('padrao', 'Usuário Padrão'),
+        ('padrao_u', 'Usuário Padrão'),
         ('premium', 'Usuário Premium'), # Exemplo: Pode ter planos 'Premium'
         ('admin', 'Administrador'),     # Exemplo: Se for um admin da barbearia
     ]
