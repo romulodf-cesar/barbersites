@@ -67,4 +67,5 @@ def criar_plano(request): # Renomeei a função para deixar o propósito mais cl
     return render(request, 'crm/plano.html', {'form': form})
 
 
-
+def criar_usuario(request):
+    return render(request, 'crm/confirma_usuario.html')
