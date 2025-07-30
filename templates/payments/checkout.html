@@ -1,5 +1,401 @@
 {% load static %}
 <!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarberSites - Checkout</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
+
+    <!-- Django Form Media -->
+    {{ usuario_form.media }}
+    {{ barbearia_form.media }}
+
+    <style>
+        .background-card {
+            background-color: #F8F4E3;
+        }
+
+        .fixed-top-navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1030;
+        }
+    </style>
+
+</head>
+
+<body class="bg-dark text-white" style="padding-top: 80px;">
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top-navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'home' %}"><img src="{% static '/assets/logo.png' %}" width="150px"></a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="container-fluid bg-dark py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-white">
+                    <span class="text-warning">Finalize sua Compra</span> e Transforme sua Barbearia
+                </h1>
+                <p class="fs-5 text-secondary">Preencha seus dados para ter acesso aos nossos templates premium.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="row justify-content-center">
+            <!-- Form Column -->
+            <div class="col-lg-6 mb-4">
+                <div class="card p-4 shadow-lg background-card" style="border-radius: 15px;">
+                    <div class="card-body text-dark">
+                        <h5 class="card-title fw-bold mb-4">Informações de Cadastro</h5>
+                        <p class="card-text text-secondary mb-4">Preencha seus dados para finalizar a compra</p>
+
+                        <!-- Form -->
+                        <form id="checkout-form">
+                            {% csrf_token %}
+
+                            <!-- Dados Pessoais -->
+                            <h5 class="card-title fw-bold mb-3">Seus Dados Pessoais</h5>
+                            <div class="mb-3">
+                                {{ usuario_form.nome_completo.label_tag }}
+                                {{ usuario_form.nome_completo }}
+                                {% if usuario_form.nome_completo.errors %}
+                                    <div class="text-danger small">{{ usuario_form.nome_completo.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ usuario_form.email.label_tag }}
+                                {{ usuario_form.email }}
+                                {% if usuario_form.email.errors %}
+                                    <div class="text-danger small">{{ usuario_form.email.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ usuario_form.telefone.label_tag }}
+                                {{ usuario_form.telefone }}
+                                {% if usuario_form.telefone.errors %}
+                                    <div class="text-danger small">{{ usuario_form.telefone.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <hr class="my-4">
+
+                            <!-- Dados da Barbearia -->
+                            <h5 class="card-title fw-bold mb-3">Dados da Barbearia</h5>
+                            <div class="mb-3">
+                                {{ barbearia_form.nome_barbearia.label_tag }}
+                                {{ barbearia_form.nome_barbearia }}
+                                {% if barbearia_form.nome_barbearia.errors %}
+                                    <div class="text-danger small">{{ barbearia_form.nome_barbearia.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ barbearia_form.endereco.label_tag }}
+                                {{ barbearia_form.endereco }}
+                                {% if barbearia_form.endereco.errors %}
+                                    <div class="text-danger small">{{ barbearia_form.endereco.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ barbearia_form.cidade.label_tag }}
+                                    {{ barbearia_form.cidade }}
+                                    {% if barbearia_form.cidade.errors %}
+                                        <div class="text-danger small">{{ barbearia_form.cidade.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ barbearia_form.estado.label_tag }}
+                                    {{ barbearia_form.estado }}
+                                    {% if barbearia_form.estado.errors %}
+                                        <div class="text-danger small">{{ barbearia_form.estado.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                {{ barbearia_form.cep.label_tag }}
+                                {{ barbearia_form.cep }}
+                                {% if barbearia_form.cep.errors %}
+                                    <div class="text-danger small">{{ barbearia_form.cep.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Error Messages -->
+                            {% if usuario_form.non_field_errors %}
+                                <div class="text-danger small">{{ usuario_form.non_field_errors }}</div>
+                            {% endif %}
+                            {% if barbearia_form.non_field_errors %}
+                                <div class="text-danger small">{{ barbearia_form.non_field_errors }}</div>
+                            {% endif %}
+
+                            <hr class="my-4">
+
+                            <!-- Checkboxes -->
+                            <div class="form-check mb-3">
+                                {{ usuario_form.aceite_termos }}
+                                <label class="form-check-label" for="{{ usuario_form.aceite_termos.id_for_label }}">
+                                    Aceito os Termos de Uso
+                                </label>
+                                {% if usuario_form.aceite_termos.errors %}
+                                    <div class="text-danger small">{{ usuario_form.aceite_termos.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-check mb-4">
+                                {{ usuario_form.receber_notificacoes }}
+                                <label class="form-check-label" for="{{ usuario_form.receber_notificacoes.id_for_label }}">
+                                    Desejo receber notificações
+                                </label>
+                                {% if usuario_form.receber_notificacoes.errors %}
+                                    <div class="text-danger small">{{ usuario_form.receber_notificacoes.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid mt-5">
+                                <button type="submit" id="pay-button" class="btn btn-warning rounded-pill btn-lg fw-bold">
+                                    Pagar R${{ plano.valor|floatformat:2 }}
+                                </button>
+                            
+                                <p class="mt-3 text-center">
+                                    <a href="/" class="btn btn-secondary rounded-pill w-50">Voltar para a página inicial</a>
+                                </p>
+
+                                <p class="text-center text-secondary small mb-0 mt-2">Pagamento seguro via Stripe</p>
+                                <p class="text-center text-secondary small">Garantia de 30 dias ou dinheiro de volta</p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4 mb-4">
+                <div class="sticky-top" style="top: 100px;">
+                    <!-- Plan Info -->
+                    <div class="card p-4 shadow-lg mb-4" style="background-color: #F8F4E3; border-radius: 15px;">
+                        <div class="card-body text-dark">
+                            <h5 class="card-title fw-bold mb-4">Informações de Pagamento</h5>
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Plano: {{ plano.nome_plano }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Valor:</strong> R$ {{ plano.valor|floatformat:2 }}<br>
+                                        <strong>Descrição:</strong> {{ plano.descricao|default:"Sem descrição." }}
+                                    </p>
+                                    {% if plano.trial_period_days > 0 %}
+                                        <p class="text-success fw-bold mb-0">
+                                            Primeiros {{ plano.trial_period_days }} dias grátis!
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Help Card -->
+                    <div class="card p-4 shadow-lg" style="background-color: #2b2b2b; border-radius: 15px;">
+                        <div class="card-body text-white">
+                            <h5 class="card-title fw-bold mb-3">Precisa de Ajuda?</h5>
+                            <p class="card-text text-secondary mb-3">Fale conosco via WhatsApp</p>
+                            <a href="https://wa.me/seu_numero" target="_blank" class="btn btn-success rounded-pill w-100 fw-bold">
+                                Fale Conosco
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-body-tertiary text-center text-lg-start mt-5 py-3 border-top border-secondary">
+        <div class="container d-flex justify-content-center justify-content-lg-between align-items-center flex-wrap">
+            <div class="text-center text-lg-start mb-2 mb-lg-0">
+                <span>© 2025 Barbersites. Todos os direitos reservados.</span>
+            </div>
+            <div class="d-flex justify-content-center">
+                <a href="https://www.facebook.com/" class="mx-2" target="_blank" aria-label="Facebook">
+                    <img src="{% static 'assets/facebook.png' %}" alt="Facebook" style="width: 30px; height: 30px;">
+                </a>
+                <a href="https://www.instagram.com/" class="mx-2" target="_blank" aria-label="Instagram">
+                    <img src="{% static 'assets/instagram.png' %}" alt="Instagram" style="width: 30px; height: 30px;">
+                </a>
+                <a href="https://twitter.com/" class="mx-2" target="_blank" aria-label="Twitter">
+                    <img src="{% static 'assets/x.png' %}" alt="Twitter" style="width: 30px; height: 30px;">
+                </a>
+                <a href="https://wa.me/SEUNUMERO" target="_blank" class="mx-2" aria-label="WhatsApp">
+                    <img src="{% static 'assets/whatsapp.png' %}" alt="WhatsApp" style="width: 30px; height: 30px;">
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializa Stripe
+            const stripe = Stripe('{{ STRIPE_PUBLIC_KEY }}');
+            const checkoutForm = document.getElementById('checkout-form');
+            const payButton = document.getElementById('pay-button');
+
+            // Função para obter CSRF token
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // Função para validar formulário
+            function validateForm() {
+                const requiredFields = [
+                    'id_nome_completo',
+                    'id_email', 
+                    'id_telefone',
+                    'id_nome_barbearia',
+                    'id_endereco',
+                    'id_cidade',
+                    'id_estado',
+                    'id_cep'
+                ];
+
+                for (let fieldId of requiredFields) {
+                    const field = document.getElementById(fieldId);
+                    if (!field || !field.value.trim()) {
+                        alert(`Por favor, preencha o campo ${field ? field.previousElementSibling.textContent : fieldId}`);
+                        return false;
+                    }
+                }
+
+                const aceiteTermos = document.getElementById('id_aceite_termos');
+                if (!aceiteTermos || !aceiteTermos.checked) {
+                    alert('Por favor, aceite os termos de uso para continuar.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Event listener para o submit do formulário
+            checkoutForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                // Validar formulário
+                if (!validateForm()) {
+                    return;
+                }
+
+                // Coletar dados do formulário
+                const formData = {
+                    usuario_data: {
+                        nome_completo: document.getElementById('id_nome_completo').value.trim(),
+                        email: document.getElementById('id_email').value.trim(),
+                        telefone: document.getElementById('id_telefone').value.trim(),
+                        aceite_termos: document.getElementById('id_aceite_termos').checked,
+                        receber_notificacoes: document.getElementById('id_receber_notificacoes').checked
+                    },
+                    barbearia_data: {
+                        nome_barbearia: document.getElementById('id_nome_barbearia').value.trim(),
+                        endereco: document.getElementById('id_endereco').value.trim(),
+                        cidade: document.getElementById('id_cidade').value.trim(),
+                        estado: document.getElementById('id_estado').value,
+                        cep: document.getElementById('id_cep').value.trim()
+                    }
+                };
+
+                // Desabilitar botão durante processamento
+                payButton.disabled = true;
+                payButton.textContent = 'Processando...';
+
+                // Fazer requisição para criar sessão de checkout
+                fetch(`/payments/create-checkout-session/{{ plano.pk }}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || `Erro HTTP: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    if (data.id) {
+                        // Redirecionar para Stripe Checkout
+                        return stripe.redirectToCheckout({ sessionId: data.id });
+                    } else {
+                        throw new Error('ID da sessão não retornado');
+                    }
+                })
+                .then(result => {
+                    if (result && result.error) {
+                        throw new Error(result.error.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro no checkout:', error);
+                    alert('Erro ao processar pagamento: ' + error.message);
+                })
+                .finally(() => {
+                    // Reabilitar botão
+                    payButton.disabled = false;
+                    payButton.textContent = `Pagar R${{ plano.valor|floatformat:2 }}`;
+                });
+            });
+        });
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
+
+
+
+
+
+<!-- {% load static %}
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -289,4 +685,4 @@
         crossorigin="anonymous"></script>
 </body>
 
-</html>
+</html> -->

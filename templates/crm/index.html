@@ -8,56 +8,113 @@
     <title>BarberSites</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <script src="https://js.stripe.com/v3/"></script>
+
+<!-- style="background-color: #f8f9fa;" -->
+
     <style>
-        /* Seus estilos CSS */
+        /* Seus estilos CSS existentes */
+        /* Mantendo os estilos que não são puramente de layout ou tipografia Bootstrap */
         .icon-wrapper {
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 2rem;
             font-weight: bold;
-            color: #007bff; /* Ou a cor que você preferir */
+            color: #007bff;
         }
         .icon-arrow {
             margin-left: 10px;
             font-size: 1.5rem;
             color: #ccc;
         }
+
+        /* Estilo para o navbar fixo - não é 100% Bootstrap com classes */
+        .fixed-top-navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1030;
+        }
+
+        /* Adiciona um padding ao corpo para evitar que o conteúdo fique escondido atrás do navbar */
+        body {
+            padding-top: 80px; /* Ajuste este valor de acordo com a altura do seu navbar */
+        }
+        
+        /* Estilos específicos para o underline do título da seção, já que não é uma classe Bootstrap */
+        #planos-section h2 {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 15px; /* Mais espaço para a linha */
+        }
+
+        #planos-section h2 span {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 80px; /* Linha um pouco mais longa */
+            height: 5px; /* Linha mais grossa */
+            background-color: #007bff;
+            border-radius: 2px;
+        }
+
+        /* Ajustes menores para elementos que o Bootstrap não estiliza diretamente para este caso */
+        .pricing-card .card-body {
+            display: flex; /* Permite flexbox dentro do corpo do card */
+            flex-direction: column; /* Organiza os itens em coluna */
+            flex-grow: 1; /* Faz o corpo crescer para preencher o espaço */
+        }
+
+        .pricing-card .features-list {
+            list-style: none; /* Remove marcadores de lista */
+            padding: 0;
+            margin-bottom: 2rem; /* Espaçamento abaixo da lista de recursos */
+            flex-grow: 1; /* Faz a lista de recursos crescer e empurrar o botão para baixo */
+        }
+
+        .pricing-card .features-list li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Centraliza o texto do recurso */
+        }
     </style>
+    <link rel="stylesheet" href="{% static 'styles/color.css'%}">
 </head>
 
-<body>
-    <div class="container">
-        <nav class="navbar navbar-expand-lg bg-body-tertiary">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="#"><img src="{% static '/assets/logo.png' %}" width="150px"></a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-                    aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="#">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Como funciona</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Modelos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#planos-section">Planos</a> {# Ajustado para rolar para a seção de planos #}
-                        </li>
-                    </ul>
-                </div>
+<body class="bg-dark text-white" style="padding-top: 80px;">
+    <nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top-navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'home' %}"><img src="{% static '/assets/logo.png' %}" width="150px"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#home-section">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#como-funciona-section">Como funciona</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#planos-section">Planos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#modelos-section">Modelos</a>
+                    </li>
+                </ul>
             </div>
-        </nav>
-        <div id="carouselExampleAutoplaying" class="carousel slide" data-bs-ride="carousel">
+        </div>
+    </nav>
+    
+    <div class="container"> 
+        <div id="home-section" class="carousel slide" data-bs-ride="carousel">
             <div class="carousel-inner">
                 <div class="carousel-item active">
                     <img src="{% static '/assets/banner1.png'%}" class="d-block w-100" alt="...">
@@ -82,14 +139,14 @@
             </button>
         </div>
 
-        <section class="how-it-works py-5 bg-light text-center">
+        <section class="how-it-works py-5 text-center">
             <div class="container">
                 <h2 class="mb-5">Como funciona?</h2>
                 <p class="lead mb-5">Em apenas 3 passos simples, sua barbearia estará online e pronta para receber clientes</p>
 
-                <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="row row-cols-1 row-cols-md-3 g-4 " >
                     <div class="col">
-                        <div class="card h-100 border-0 shadow-sm p-4">
+                        <div class="card h-100 border-0 shadow-sm p-4" style="background-color: #f8f9fa;">
                             <div class="card-body">
                                 <div class="icon-wrapper mb-3">
                                     <span class="icon-number">01</span>
@@ -126,69 +183,74 @@
                 </div>
 
                 <div class="mt-5">
-                  <a href="{% url 'list_plans' %}" class="btn btn-warning btn-lg fw-bold">Teste Grátis</a> {# Botão para ir para a lista de planos se não quiser comprar direto #}
+                  <a href="{% url 'list_plans' %}" class="btn btn-warning btn-lg fw-bold rounded-pill">Teste Grátis</a>
                 </div>
             </div>
         </section>
 
-        {# Seção de Planos na Index #}
-        <div class="container py-5" id="planos-section"> {# Adicionado ID para navegação #}
-            <h2 class="mb-4" style="font-weight: bold; position: relative; display: inline-block; padding-bottom: 10px;">
-                Preços e Planos
-                <span style="position: absolute; left: 0; bottom: 0; width: 60px; height: 4px; background-color: #007bff; border-radius: 2px;"></span>
-            </h2>
+        {# Seção de Planos - Usando mais classes Bootstrap #}
+        <section id="planos-section" class="py-5 text-center"> {# py-5 para padding, bg-light para fundo #}
+            <div class="container">
+                <h2 class="text-center fw-bold fs-2 mb-5"> {# text-center, fw-bold, fs-2 para o título #}
+                    Preços e Planos
+                    <span></span> {# Mantém o span para o underline customizado #}
+                </h2>
 
-            <div class="row">
-                <div class="col-12 col-md-3 d-none d-md-block">
-                    <ul class="list-unstyled pt-4">
-                        <li class="py-2 border-bottom d-flex align-items-center fw-bold text-secondary">SUPORTE PREMIUM <span class="ms-auto"><i class="bi bi-question-circle text-muted ms-1"></i></span></li>
-                        <li class="py-2 border-bottom d-flex align-items-center fw-bold text-secondary">TEMPLATE ATUALIZADOS <span class="ms-auto"><i class="bi bi-question-circle text-muted ms-1"></i></span></li>
-                        <li class="py-2 border-bottom d-flex align-items-center fw-bold text-secondary">SUPORTE & ATUALIZAÇÃO <span class="ms-auto"><i class="bi bi-question-circle text-muted ms-1"></i></span></li>
-                        <li class="py-2 d-flex align-items-center fw-bold text-secondary">ACESSO A TODOS TEMPLATES<span class="ms-auto"><i class="bi bi-question-circle text-muted ms-1"></i></span></li>
-                    </ul>
-                </div>
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    {% for plano in planos %}
+                    <div class="col">
+                        <div class="card h-100 border-0 shadow-lg rounded-3 overflow-hidden pricing-card"> {# h-100 para altura igual, border-0, shadow-lg, rounded-3 #}
+                            <div class="card-body p-4 d-flex flex-column"> {# p-4 para padding, d-flex flex-column #}
+                                <h5 class="card-title text-uppercase fw-semibold text-secondary mb-3">{{ plano.nome_plano }}</h5> {# fw-semibold, text-secondary #}
+                                <p class="fs-1 fw-bold text-dark mb-0">R$ {{ plano.valor|floatformat:2 }}</p> {# fs-1 para tamanho grande, fw-bold, text-dark #}
+                                {% if plano.interval %}
+                                    <p class="text-muted small mb-3">/ {{ plano.get_interval_display|lower }}</p> {# text-muted, small #}
+                                {% endif %}
+                                {% if plano.trial_period_days > 0 %}
+                                    <p class="text-success fw-bold small mb-3">Primeiros {{ plano.trial_period_days }} dias grátis!</p> {# text-success, fw-bold, small #}
+                                {% endif %}
+                                {# Descrição do plano (opcional) #}
+                                {% if plano.descricao %}
+                                    <p class="text-dark-emphasis mb-4">{{ plano.descricao }}</p> {# text-dark-emphasis #}
+                                {% endif %}
 
-                <div class="col-12 col-md-9">
-                    <div class="row row-cols-1 row-cols-md-3 g-0">
-                        {% for plano in planos %} {# Loop sobre os planos passados pela view #}
-                        <div class="col">
-                            <div class="card h-100 border-0 rounded-0">
-                                <div class="card-body text-center p-0">
-                                    <div class="py-4 border-bottom">
-                                        <h5 class="card-title text-uppercase mb-2 text-secondary">{{ plano.nome_plano }}</h5>
-                                        <h2 class="card-text display-7 fw-light mb-0">R$ {{ plano.valor|floatformat:2 }}</h2>
-                                        {% if plano.interval %}
-                                            <p class="text-muted small">/ {{ plano.get_interval_display|lower }}</p>
-                                        {% endif %}
-                                        {% if plano.trial_period_days > 0 %}
-                                            <p class="text-success small">Primeiros {{ plano.trial_period_days }} dias grátis!</p>
-                                        {% endif %}
-                                    </div>
-                                    <div class="d-flex flex-column">
-                                        <div class="py-3 border-bottom text-secondary small">{{ plano.descricao|default:"Sem descrição" }}</div>
-                                    </div>
-                                </div>
-                                <div class="card-footer bg-white border-top-0 pt-4 pb-4">
-                                    <div class="d-grid">
-                                        {# Botão para redirecionar para a página de checkout personalizada #}
-                                        <a href="{% url 'checkout_page' plano.id %}" class="btn btn-primary btn-lg rounded-0 shadow-sm">COMPRAR / ASSINAR</a>
-                                    </div>
-                                </div>
+                                {# Lista de recursos (Exemplo - ajuste conforme seu modelo Django) #}
+                                <ul class="features-list text-start mb-4 flex-grow-1"> {# text-start para alinhamento da lista, mb-4 #}
+                                    {% if plano.recursos_list %} 
+                                        {% for recurso in plano.recursos_list %}
+                                            <li><i class="bi bi-check-circle-fill text-success me-2"></i> {{ recurso }}</li> {# text-success, me-2 para margem #}
+                                        {% endfor %}
+                                    {% else %}
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Recurso Básico 1</li>
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Recurso Básico 2</li>
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Recurso Básico 3</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            <div class="card-footer bg-white border-top-0 pt-4 pb-4"> {# bg-white, border-top-0 #}
+                                <a href="{% url 'checkout_page' plano.id %}" class="btn btn-warning btn-lg rounded-pill w-100 fw-bold">COMPRAR / ASSINAR</a> {# btn-lg, rounded-pill, w-100 #}
                             </div>
                         </div>
-                        {% empty %}
-                            <p class="col-12">Nenhum plano disponível no momento.</p>
-                        {% endfor %}
                     </div>
+                    {% empty %}
+                        <p class="col-12 text-center text-muted">Nenhum plano disponível no momento.</p>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
+        </section>
 
-        {# Seção dos Templates (Não alterada, apenas para contexto) #}
-        <div class="row row-cols-1 row-cols-md-3 g-4">
+        {# Seção dos Templates #}
+        <section  class="how-it-works py-5 text-center">
+            <div class="container">
+                <h2 class="mb-5">Modelos</h2>
+            </div>
+        </section>
+        <div id="modelos-section" class="row row-cols-1 row-cols-md-3 g-4 py-5">
+
             <div class="col">
+
                 <div class="card h-100">
-                    <img src="{% static 'template3.png' %}" class="card-img-top" alt="..."> {# Corrigido static #}
+                    <img src="{% static '/assets/template3.png' %}" class="card-img-top" alt="...">
                     <div class="card-body">
                         <h5 class="card-title">Barber Premium</h5>
                         <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
@@ -197,7 +259,7 @@
             </div>
             <div class="col">
                 <div class="card h-100">
-                    <img src="{% static 'template1.png' %}" class="card-img-top" alt="..."> 
+                    <img src="{% static '/assets/template1.png' %}" class="card-img-top" alt="..."> 
                     <div class="card-body">
                         <h5 class="card-title">Barber Full</h5>
                         <p class="card-text">This card has supporting text below as a natural lead-in to additional content.</p>
@@ -206,7 +268,7 @@
             </div>
             <div class="col">
                 <div class="card h-100">
-                    <img src="{% static 'template2.png' %}" class="card-img-top" alt="..."> {# Corrigido static #}
+                    <img src="{% static '/assets/template2.png' %}" class="card-img-top" alt="...">
                     <div class="card-body">
                         <h5 class="card-title">Barber Flash</h5>
                         <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
@@ -214,30 +276,29 @@
                 </div>
             </div>
         </div>
-        {# Fim da seção de templates #}
-
-        <footer class="bg-light text-center text-lg-start mt-5 py-3">
-            <div class="container d-flex justify-content-center justify-content-lg-between align-items-center flex-wrap">
-                <div class="text-center text-lg-start mb-2 mb-lg-0">
-                    <span>© 2025 Barbersites. Todos os direitos reservados.</span>
-                </div>
-                <div class="d-flex justify-content-center">
-                    <a href="https://www.facebook.com/" class="mx-2" target="_blank" aria-label="Facebook">
-                        <img src="{% static '/assets/facebook.png' %}" alt="Facebook Logo" style="width: 30px; height: 30px;">
-                    </a>
-                    <a href="https://www.instagram.com/" class="mx-2" target="_blank" aria-label="Instagram">
-                        <img src="{% static '/assets/instagram.png' %}" alt="Instagram Logo" style="width: 30px; height: 30px;">
-                    </a>
-                    <a href="https://twitter.com/" class="mx-2" target="_blank" aria-label="Twitter">
-                        <img src="{% static '/assets/x.png' %}" alt="Twitter Logo" style="width: 30px; height: 30px;">
-                    </a>
-                    <a href="https://wa.me/SEUNUMERO" class="mx-2" target="_blank" aria-label="WhatsApp">
-                        <img src="{% static '/assets/whatsapp.png' %}" alt="WhatsApp Logo" style="width: 30px; height: 30px;">
-                    </a>
-                </div>
-            </div>
-        </footer>
     </div>
+
+    <footer class="bg-light text-center text-muted text-lg-start mt-5 py-3">
+        <div class="container-fluid d-flex justify-content-center justify-content-lg-between align-items-center flex-wrap">
+            <div class="text-center text-lg-start mb-2 mb-lg-0">
+                <span>© 2025 Barbersites. Todos os direitos reservados.</span>
+            </div>
+            <div class="d-flex justify-content-center">
+                <a href="https://www.facebook.com/" class="mx-2" target="_blank" aria-label="Facebook">
+                    <img src="{% static '/assets/facebook.png' %}" alt="Facebook Logo" style="width: 30px; height: 30px;">
+                </a>
+                <a href="https://www.instagram.com/" class="mx-2" target="_blank" aria-label="Instagram">
+                    <img src="{% static '/assets/instagram.png' %}" alt="Instagram Logo" style="width: 30px; height: 30px;">
+                </a>
+                <a href="https://twitter.com/" class="mx-2" target="_blank" aria-label="Twitter">
+                    <img src="{% static '/assets/x.png' %}" alt="Twitter Logo" style="width: 30px; height: 30px;">
+                </a>
+                <a href="https://wa.me/SEUNUMERO" class="mx-2" target="_blank" aria-label="WhatsApp">
+                    <img src="{% static '/assets/whatsapp.png' %}" alt="WhatsApp Logo" style="width: 30px; height: 30px;">
+                </a>
+            </div>
+        </div>
+    </footer>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
