@@ -119,8 +119,10 @@ def create_checkout_session(request, plano_pk):
                 }
             )
             
+            # Pega o 'stripe_customer_id' associado ao 'Usuario' local, se existir.
             customer_stripe_id = usuario.stripe_customer_id
 
+            # Prepara os parâmetros para criar a sessão do Stripe Checkout.
             session_params = {
                 'line_items': [
                     {
@@ -131,6 +133,18 @@ def create_checkout_session(request, plano_pk):
                 'mode': 'subscription',
                 'success_url': request.build_absolute_uri(reverse('payment_success')) + '?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url': request.build_absolute_uri(reverse('payment_cancel')),
+
+                # Adiciona metadados à sessão do Stripe.
+                # Estes metadados estarão disponíveis no webhook quando a sessão for concluída.
+                'metadata': {
+                    'barbearia_nome': barbearia_data['nome_barbearia'],
+                    'barbearia_endereco': barbearia_data['endereco'],
+                    'barbearia_cidade': barbearia_data['cidade'],
+                    'barbearia_estado': barbearia_data['estado'],
+                    'barbearia_cep': barbearia_data['cep'],
+                    'usuario_email_origem': usuario_data['email'], # Para garantir que temos o email original
+                    'usuario_nome_origem': usuario_data['nome_completo'], # Para garantir que temos o nome original
+                },
             }
 
             if customer_stripe_id:
@@ -243,10 +257,13 @@ def stripe_webhook(request):
         if session.mode == 'subscription':
             subscription_id = session.subscription # O ID da Assinatura criada no Stripe.
             customer_id = session.customer # O ID do Cliente no Stripe.
-            customer_email = session.customer_details.email if session.customer_details and session.customer_details.email else None
-            customer_name = session.customer_details.name if session.customer_details and session.customer_details.name else None
+            customer_email = session.metadata.get('usuario_email_origem') # Pegamos do metadata
+            customer_name = session.metadata.get('usuario_nome_origem') # Pegamos do metadata
+            # customer_email = session.customer_details.email if session.customer_details and session.customer_details.email else None
+            # customer_name = session.customer_details.name if session.customer_details and session.customer_details.name else None
 
             stripe_price_id = None
+
             try:
                 # --- OBTENDO O stripe_price_id DE FORMA ROBUSTA ---
                 # Para sessões de assinatura, o Stripe não garante que 'session.line_items' virá completo
@@ -301,30 +318,77 @@ def stripe_webhook(request):
 
             try:
                 # 1. Encontrar ou criar o 'Usuario' no seu banco de dados.
+                # Usamos o email do metadata, que é o que o usuário preencheu.
                 usuario, created_user = Usuario.objects.get_or_create(
                     email=customer_email,
                     defaults={
                         'nome_completo': customer_name if customer_name else customer_email,
-                        'telefone': 'N/A'
+                        'telefone': 'N/A' # O telefone não está nos metadados, manter N/A ou expandir metadata.
                     }
                 )
                 if created_user:
                     print(f"Usuário criado: {usuario.email}")
 
-                # 2. Atualizar o 'stripe_customer_id' do 'Usuario' local, se ele não tiver.
-                if not usuario.stripe_customer_id:
-                    usuario.stripe_customer_id = customer_id
-                    usuario.save()
-                    print(f"stripe_customer_id '{customer_id}' associado ao usuário '{usuario.email}'.")
 
-                # 3. Encontrar o 'Plano' correspondente no seu banco de dados.
+                # ... (código para atualizar stripe_customer_id) ...
+
+                # 3. Encontrar o 'Plano' correspondente.
                 plano = Plano.objects.get(stripe_price_id=stripe_price_id)
 
-                # 4. Obter uma 'Barbearia' (assumindo a primeira existente para este cenário).
-                barbearia = Barbearia.objects.first()
-                if not barbearia:
-                    print("AVISO: Nenhuma barbearia encontrada. Não foi possível criar a assinatura localmente.")
+                # 4. Obter ou criar a 'Barbearia' CORRETA
+                # NOVO: Usamos os dados dos metadados para encontrar ou criar a barbearia.
+                barbearia_nome = session.metadata.get('barbearia_nome')
+                barbearia_endereco = session.metadata.get('barbearia_endereco')
+                barbearia_cidade = session.metadata.get('barbearia_cidade')
+                barbearia_estado = session.metadata.get('barbearia_estado')
+                barbearia_cep = session.metadata.get('barbearia_cep')
+
+                if not barbearia_nome: # Validação mínima
+                    print("AVISO: Nome da barbearia ausente nos metadados. Não foi possível vincular Barbearia.")
+                    # Poderia retornar um 400 aqui se Barbearia for obrigatória.
+                    # Para simplificar e evitar crash, pegamos a primeira ou retornamos.
+                    barbearia = Barbearia.objects.first() 
+                else:
+                    barbearia, created_barberia_obj = Barbearia.objects.get_or_create(
+                        nome_barbearia=barbearia_nome,
+                        defaults={
+                            'endereco': barbearia_endereco,
+                            'cidade': barbearia_cidade,
+                            'estado': barbearia_estado,
+                            'cep': barbearia_cep,
+                            # Adicione aqui o usuario_responsavel se você implementou o ForeignKey no model Barbearia.
+                            # 'usuario_responsavel': usuario,
+                        }
+                    )
+                    if created_barberia_obj:
+                        print(f"DEBUG: Barbearia '{barbearia_nome}' criada ou encontrada.")
+
+
+                if not barbearia: # Se mesmo com o fallback não encontrou/criou uma barbearia.
+                    print("AVISO: Nenhuma barbearia válida encontrada ou criada. Não foi possível criar a assinatura localmente.")
                     return JsonResponse({'status': 'success', 'message': 'No barbershop found.'})
+
+
+
+                # # 2. Atualizar o 'stripe_customer_id' do 'Usuario' local, se ele não tiver.
+                # if not usuario.stripe_customer_id:
+                #     usuario.stripe_customer_id = customer_id
+                #     usuario.save()
+                #     print(f"stripe_customer_id '{customer_id}' associado ao usuário '{usuario.email}'.")
+
+                # # 3. Encontrar o 'Plano' correspondente no seu banco de dados.
+                # plano = Plano.objects.get(stripe_price_id=stripe_price_id)
+
+                # # 4. Obter uma 'Barbearia' (assumindo a primeira existente para este cenário).
+                # barbearia = Barbearia.objects.first()
+
+
+                # if not barbearia:
+                #     print("AVISO: Nenhuma barbearia encontrada. Não foi possível criar a assinatura localmente.")
+                #     return JsonResponse({'status': 'success', 'message': 'No barbershop found.'})
+
+
+
 
                 # 5. Criar ou atualizar a 'Assinatura' no seu banco de dados.
                 assinatura, created_sub = Assinatura.objects.get_or_create(
@@ -478,11 +542,26 @@ def stripe_webhook(request):
             return JsonResponse({'status': 'success', 'message': 'Invoice not related to subscription or subscription ID missing.'})
 
 
+            # --- NOVA LÓGICA DE CANCELAMENTO CONDICIONAL ---
+            # O Stripe informa se a assinatura foi cancelada IMEDIATAMENTE (cancel_at_period_end: false)
+            # ou se o acesso continua até o final do período pago (cancel_at_period_end: true).
+            if subscription.cancel_at_period_end:
+                assinatura.registrar_cancelamento_ao_final_do_periodo()
+                # A revogação real do acesso será feita por uma tarefa agendada que verifica data_expiracao.
+            else:
+                # Cancelamento imediato (geralmente para trials ou quando o acesso é cortado na hora).
+                assinatura.registrar_cancelamento_imediato()
+                # A revogação real do acesso já acontece dentro de registrar_cancelamento_imediato.
+                
+            print(f"Assinatura {assinatura.id} processada para cancelamento. Status final: {assinatura.status_assinatura}.")
+            
+
+
     # Evento: 'customer.subscription.deleted'
     # Disparado quando uma assinatura é cancelada (pelo cliente no portal, no dashboard do Stripe, ou via API).
-    elif event['type'] == 'customer.subscription.deleted':
-        subscription = event['data']['object'] # Objeto da assinatura deletada.
-        print(f"Webhook: Subscription Deleted - ID: {subscription.id}")
+    # elif event['type'] == 'customer.subscription.deleted':
+    #     subscription = event['data']['object'] # Objeto da assinatura deletada.
+    #     print(f"Webhook: Subscription Deleted - ID: {subscription.id}")
         try:
             # Tenta encontrar a assinatura local.
             assinatura = Assinatura.objects.get(stripe_subscription_id=subscription.id)
