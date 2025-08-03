@@ -28,6 +28,9 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', '')
 
+TEMPLATE_APP_API_KEY = os.getenv('TEMPLATE_APP_API_KEY', '')
+
+
 STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
@@ -50,6 +53,7 @@ INSTALLED_APPS = [
     'cms.apps.CmsConfig',
     'crm.apps.CrmConfig',
     'payments.apps.PaymentsConfig',
+    'api.apps.ApiConfig',
 ]
 
 MIDDLEWARE = [
@@ -103,7 +107,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'barbearia_db',
         'USER': 'root',
-        'PASSWORD': 'root',
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),  #
         'HOST': 'localhost',  # Ou o IP do seu servidor MySQL, se não for local
         'PORT': '3306',  # A porta padrão do MySQL. Mude se for diferente
         'OPTIONS': {
@@ -154,7 +158,7 @@ EMAIL_USE_SSL = False
 # Nome de usuário para autenticação no servidor SMTP (seu e-mail ou nome de usuário do provedor).
 EMAIL_HOST_USER = 'a70abeb14b42fa' 
 # Senha para autenticação no servidor SMTP.
-EMAIL_HOST_PASSWORD = 'd01f0ad5e84689'
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 
 
 # (Opcional) Assunto padrão para e-mails enviados pelo Django (ex: reset de senha).
