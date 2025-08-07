@@ -28,7 +28,8 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', '')
 
-TEMPLATE_APP_API_KEY = os.getenv('TEMPLATE_APP_API_KEY', '')
+CRM_TO_TEMPLATE_API_KEY = os.getenv('CRM_TO_TEMPLATE_API_KEY', '')
+TEMPLATE_TO_CRM_API_KEY = os.getenv('TEMPLATE_TO_CRM_API_KEY', '')
 
 
 STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')
@@ -50,10 +51,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Seus apps
     'cms.apps.CmsConfig',
     'crm.apps.CrmConfig',
     'payments.apps.PaymentsConfig',
     'api.apps.ApiConfig',
+    # DRF e Autenticação
+    'rest_framework',
+    'rest_framework.authtoken', # Necessário para TokenAuthentication
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -139,6 +145,50 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# Configurações do Django REST Framework
+REST_FRAMEWORK = {
+    # Define a classe de autenticação padrão para TODA a API.
+    # Usaremos TokenAuthentication para a nossa API.
+    # SessionAuthentication é bom para o admin do DRF, então podemos mantê-la.
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    # Define a classe de permissão padrão (opcional, mas boa prática).
+    # 'IsAuthenticated' significa que apenas usuários autenticados podem acessar.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    # Configuração do Swagger/Spectacular
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# Configurações do DRF-Spectacular (Swagger)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API do Sistema CRM (BarberSites)',
+    'DESCRIPTION': 'Endpoints para o Sistema de Templates consultar status e gerenciar assinaturas no CRM.',
+    'VERSION': '1.0.0',
+    # As URLs do seu projeto principal. O auto-discovery do DRF já deve pegar `api/`
+    'SERVE_URLCONF': 'setup.urls',
+    # Para garantir que a documentação do swagger seja servida na URL correta.
+    'SCHEMA_PATH_PREFIX': '/api/v1/', # NOVO: Garante que a documentação seja gerada para a versão correta.
+    # Configurações de segurança para o Swagger UI.
+    'SECURITY': [
+        {'TokenAuth': []} # Mantenha esta configuração
+    ],
+    'COMPONENTS': {
+        'securitySchemes': {
+            'TokenAuth': {
+                'type': 'http',
+                'scheme': 'token', # Isso diz ao Swagger para usar o prefixo "Token "
+            }
+        }
+    },
+    'SERVE_INCLUDE_SCHEMA': False, # Desativamos o JSON da schema na página principal.
+}
+
+# SECURE_PROXY_SSL_HEADER = ('HTTP_AUTHORIZATION', None)
 
 
 # ----------------------------------------------------------------------

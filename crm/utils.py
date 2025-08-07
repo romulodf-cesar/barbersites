@@ -1,15 +1,22 @@
+from django.conf import settings
 import random # Módulo para geração de números aleatórios
 import string # Módulo para acessar strings de caracteres (letras, dígitos, pontuação)
+import requests
+import json
+import stripe
+from datetime import datetime, timezone
 
 # Define o conjunto de caracteres especiais permitidos, conforme sua especificação.
 # Não inclui acentuação ou til.
 ALLOWED_SPECIAL_CHARS = ',.!?@#$%&*-_=+/-' # Se quiser outros caracteres especiais, adicione aqui.
+
 
 def senha_chumbada():
     """
     Gera uma senha 'chumbada', que é uma senha fraca e previsível.
     """
     return "Senha123."
+
 
 def generate_random_password(length=12): # Padrão para 12 caracteres.
     """
@@ -109,6 +116,55 @@ def validate_password_strength(password):
         return False, problems
     
     return True, []
+
+
+def provisionar_instancia(barbearia_id, barbearia_nome, usuario_email, stripe_subscription_id):
+    """
+    Faz uma chamada de API para o sistema de templates pai para provisionar
+    uma nova instância para uma barbearia.
+    """
+    # URL do endpoint do orquestrador de templates (mockado para testes)
+    # ATENÇÃO: PARA USO EM PRODUÇÃO, esta URL deve ser alterada para o endereço real do orquestrador
+    url_orquestrador = "http://127.0.0.1:8000/api/v1/provisionar-instancia/"
+    
+    # URL do endpoint do orquestrador de templates (substitua com a URL real)
+    # url_orquestrador = "http://templates-orquestrador:8001/api/v1/provisionar-instancia/"
+    
+    api_key = settings.CRM_TO_TEMPLATE_API_KEY
+    if not api_key:
+        print("ERRO CRÍTICO: CRM_TO_TEMPLATE_API_KEY não configurada.")
+        return None
+        
+    headers = {
+        'Authorization': f'Token {api_key}',
+        'Content-Type': 'application/json',
+    }
+    
+    payload = {
+        'barbearia_id': barbearia_id,
+        'barbearia_nome': barbearia_nome,
+        'usuario_email': usuario_email,
+        'stripe_subscription_id': stripe_subscription_id,
+    }
+    
+    try:
+        response = requests.post(url_orquestrador, headers=headers, data=json.dumps(payload))
+        response.raise_for_status()
+        
+        response_data = response.json()
+        nova_instancia_url = response_data.get('instance_url')
+        
+        if not nova_instancia_url:
+            print("ERRO: O orquestrador não retornou a URL da nova instância.")
+            return None
+            
+        print(f"DEBUG: Instância provisionada. URL retornada: {nova_instancia_url}")
+        return nova_instancia_url
+        
+    except requests.exceptions.RequestException as e:
+        print(f"ERRO: Falha na chamada de API para o orquestrador de templates: {e}")
+        return None
+    
 
 # Exemplo de uso para teste (você pode rodar este arquivo crm/utils.py diretamente para testar)
 # if __name__ == "__main__":

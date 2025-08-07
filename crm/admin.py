@@ -53,6 +53,7 @@ class BarbeariaAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'nome_barbearia',
+        'instance_url',
         'endereco',
         'cidade',
         'estado',
@@ -72,11 +73,6 @@ class BarbeariaAdmin(admin.ModelAdmin):
             # Ex: kwargs['empty_label'] = "Selecione um Estado"
         # Chama o método original do pai (ModelAdmin) para os outros campos ou para finalizar este.
         return super().formfield_for_choice_field(db_field, request, **kwargs)
-
-    # REMOVIDO: O método 'descricao_curta' foi removido desta classe.
-    # Motivo: O modelo 'Barbearia' não possui um campo chamado 'descricao'.
-    # Isso causaria um AttributeError se tentasse acessá-lo.
-
 
 # --- Classe Admin para o modelo Usuário ---
 @admin.register(Usuario)
@@ -99,9 +95,6 @@ class UsuarioAdmin(admin.ModelAdmin):
     # pois seus valores são gerenciados automaticamente pelo sistema (especialmente por webhooks do Stripe).
     readonly_fields = ('stripe_customer_id',) 
 
-    # REMOVIDO: O método 'descricao_curta' foi removido desta classe.
-    # Motivo: O modelo 'Usuario' não possui um campo chamado 'descricao'.
-
 
 # --- Classe Admin para o modelo Assinatura ---
 @admin.register(Assinatura)
@@ -116,7 +109,6 @@ class AssinaturaAdmin(admin.ModelAdmin):
         'plano',
         'barbearia',
         'status_assinatura',      # Status atual da assinatura (ex: trialing, active).
-        'status_usuario',         # Nível de acesso do usuário no seu sistema.
         'data_inicio',            # Data de início do período atual da assinatura.
         'data_expiracao',         # Data de fim do período atual da assinatura.
         'trial_end',              # Data de fim do período de teste (se houver).
@@ -124,7 +116,7 @@ class AssinaturaAdmin(admin.ModelAdmin):
         'id_transacao_pagamento', # ID da última transação de pagamento.
     )
     # Filtros que aparecem na barra lateral direita do Admin.
-    list_filter = ('status_assinatura', 'status_usuario', 'plano', 'barbearia',)
+    list_filter = ('status_assinatura', 'plano', 'barbearia',)
     # Campos para busca na barra de pesquisa do Admin.
     search_fields = (
         'usuario__nome_completo',      # Permite buscar pelo nome completo do usuário relacionado.
@@ -155,3 +147,5 @@ class AssinaturaAdmin(admin.ModelAdmin):
 
     # REMOVIDO: O método 'descricao_curta' foi removido desta classe.
     # Motivo: O modelo 'Assinatura' não possui um campo chamado 'descricao'.
+
+    

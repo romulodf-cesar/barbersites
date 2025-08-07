@@ -1,8 +1,10 @@
+import json
 from django.db import models
+import requests
 from datetime import timedelta
 from django.utils import timezone # Importa timezone para trabalhar com datas e fusos horários.
 from django.contrib.auth.models import User, Group # Importa o modelo User e Group do sistema de autenticação do Django.
-from .utils import generate_random_password, senha_chumbada # Importa a função de gerar senha aleatória que criamos em crm/utils.py.
+from .utils import generate_random_password, provisionar_instancia # senha_chumbada # Importa a função de gerar senha aleatória que criamos em crm/utils.py.
 from django.core.mail import send_mail # Importa send_mail para enviar e-mails.
 from django.conf import settings # Importa settings para acessar DEFAULT_FROM_EMAIL.
 from django.core.exceptions import ObjectDoesNotExist # Importa ObjectDoesNotExist para tratar caso o OneToOneField 'user' não exista.
@@ -131,6 +133,38 @@ class Barbearia(models.Model):
         blank=False,
     )
 
+    # URL da instância do App de Templates para esta Barbearia.
+    # CRÍTICO para o CRM saber onde provisionar o usuário e para onde o cliente deve ir.
+    instance_url = models.URLField(
+        max_length=255, blank=True, null=True,
+        verbose_name="URL da Instância do Template App",
+        help_text="URL única da instância do cliente no sistema de templates (ex: https://minhabarbearia.templates.com.br)"
+    )
+    # Vincula a Barbearia a um Usuario (quem a criou/registrou) no nosso CRM.
+    usuario_responsavel = models.ForeignKey(
+        'Usuario', # Referencia o modelo 'Usuario' no mesmo app.
+        on_delete=models.SET_NULL, # Se o Usuario for deletado, este campo fica NULL.
+        null=True, blank=True,
+        related_name='minhas_barbearias_criadas', # Nome para acessar Barbearias a partir do Usuario.
+        verbose_name="Usuário Responsável (CRM)"
+    )
+
+    def get_url_id_mock(self):
+        """
+        Método de exemplo para retornar um ID fictício da URL.
+        """
+        self.instance_url = f"http://127.0.0.1:8000/api/{self.id}/"
+        self.save()
+        return self.instance_url
+
+    def get_usuario_responsavel_nome(self):
+        """
+        Método auxiliar para obter o nome do usuário responsável pela barbearia.
+        """
+        if self.usuario_responsavel:
+            return self.usuario_responsavel.nome_completo
+        return "Não definido"
+
     class Meta:
         db_table = 'crm_barbearia'
         verbose_name = 'Barbearia'
@@ -149,18 +183,18 @@ class Usuario(models.Model):
     Este modelo pode ser expandido ou substituído pelo sistema de autenticação padrão do Django (User model).
     """
 
-    # NOVO CAMPO: Vincula este Usuario a um User do sistema de autenticação do Django.
+    # Vincula este Usuario a um User do sistema de autenticação do Django.
     # Um OneToOneField significa que cada Usuario terá um e apenas um User correspondente,
     # e vice-versa.
-    user = models.OneToOneField(
-        User, # Referencia o modelo User padrão do Django.
-        on_delete=models.CASCADE, # Se o User for deletado, este Usuario também será.
-        null=True, blank=True,    # Permite que um Usuario exista sem um User inicialmente, ou vice-versa.
-                                  # Útil se o User for criado em um fluxo separado.
-                                  # Em nosso caso, vamos criar o User junto com a concessão de acesso.
-        related_name='crm_profile', # Nome para acessar este perfil CRM a partir do User (User.crm_profile).
-        verbose_name="Usuário do Sistema"
-    )
+    # user = models.OneToOneField(
+    #     User, # Referencia o modelo User padrão do Django.
+    #     on_delete=models.CASCADE, # Se o User for deletado, este Usuario também será.
+    #     null=True, blank=True,    # Permite que um Usuario exista sem um User inicialmente, ou vice-versa.
+    #                               # Útil se o User for criado em um fluxo separado.
+    #                               # Em nosso caso, vamos criar o User junto com a concessão de acesso.
+    #     related_name='crm_profile', # Nome para acessar este perfil CRM a partir do User (User.crm_profile).
+    #     verbose_name="Usuário do Sistema"
+    # )
 
     nome_completo = models.CharField(
         max_length=200,
@@ -230,12 +264,12 @@ class Assinatura(models.Model):
         ('unpaid', 'Não Paga'), # Stripe parou de tentar cobrar a fatura.
     ]
 
-    # Opções para o status do usuário (tipo de acesso), conforme a lógica de negócio do sistema.
-    STATUS_USUARIO_CHOICES = [
-        ('padrao', 'Usuário Padrão'), # Nível de acesso básico.
-        ('premium', 'Usuário Premium'), # Nível de acesso com funcionalidades premium.
-        ('admin', 'Administrador'), # Nível de acesso administrativo.
-    ]
+    # # Opções para o status do usuário (tipo de acesso), conforme a lógica de negócio do sistema.
+    # STATUS_USUARIO_CHOICES = [
+    #     ('padrao', 'Usuário Padrão'), # Nível de acesso básico.
+    #     ('premium', 'Usuário Premium'), # Nível de acesso com funcionalidades premium.
+    #     ('admin', 'Administrador'), # Nível de acesso administrativo.
+    # ]
 
     # Chave estrangeira para o 'Usuario' que fez esta assinatura.
     usuario = models.ForeignKey(
@@ -269,13 +303,13 @@ class Assinatura(models.Model):
         verbose_name='Status da Assinatura',
     )
 
-    # Campo para definir o status de acesso do usuário no sistema.
-    status_usuario = models.CharField(
-        max_length=20,
-        choices=STATUS_USUARIO_CHOICES,
-        default='padrao',
-        verbose_name='Status do Usuário',
-    )
+    # # Campo para definir o status de acesso do usuário no sistema.
+    # status_usuario = models.CharField(
+    #     max_length=20,
+    #     choices=STATUS_USUARIO_CHOICES,
+    #     default='padrao',
+    #     verbose_name='Status do Usuário',
+    # )
 
     # ID da assinatura no Stripe.
     # Este é o ID principal que conecta esta 'Assinatura' local com a 'Subscription' no Stripe.
@@ -332,7 +366,7 @@ class Assinatura(models.Model):
         db_table = 'crm_assinatura'
         verbose_name = 'Assinatura'
         verbose_name_plural = 'Assinaturas'
-        unique_together = ('usuario', 'plano',)
+        # unique_together = ('usuario', 'plano',)
         # Esta linha (comentada) garantiria que um usuário só tenha uma assinatura
         # para um plano específico ao mesmo tempo.
         # Descomente se essa lógica de negócio for necessária para você.
@@ -372,16 +406,16 @@ class Assinatura(models.Model):
         self.id_transacao_pagamento = payment_intent_id  # Armazena o ID da transação.
         self.save() # Salva as alterações.
 
-    def registrar_cancelamento(self):
-        """
-        Marca a assinatura como 'canceled' (cancelada) e invoca a lógica de revogação de acesso.
-        """
-        self.status_assinatura = 'canceled'
-        # A 'data_expiracao' não é necessariamente marcada como "agora",
-        # pois o acesso pode continuar até o final do período pago.
-        # self.data_expiracao = timezone.now() # Opcional: descomente se quiser marcar a expiração no cancelamento.
-        self.save() # Salva as alterações.
-        self.revogar_acesso() # Chama a função para revogar acesso.
+    # def registrar_cancelamento(self):
+    #     """
+    #     Marca a assinatura como 'canceled' (cancelada) e invoca a lógica de revogação de acesso.
+    #     """
+    #     self.status_assinatura = 'canceled'
+    #     # A 'data_expiracao' não é necessariamente marcada como "agora",
+    #     # pois o acesso pode continuar até o final do período pago.
+    #     # self.data_expiracao = timezone.now() # Opcional: descomente se quiser marcar a expiração no cancelamento.
+    #     self.save() # Salva as alterações.
+    #     self.revogar_acesso() # Chama a função para revogar acesso.
 
     def registrar_falha_pagamento(self):
         """
@@ -416,7 +450,7 @@ class Assinatura(models.Model):
         self.cancel_at_period_end = False # Não está mais esperando o fim do período.
         self.data_expiracao = timezone.now() # Acesso cortado agora.
         self.save()
-        self.revogar_acesso() # Chama a lógica para desativar o auth.User.
+        # self.revogar_acesso() # Chama a lógica para desativar o auth.User.
         print(f"Assinatura {self.id} cancelada e acesso REVOGADO IMEDIATAMENTE.")
 
     def marcar_cancelamento_ao_final_do_periodo(self):
@@ -431,106 +465,126 @@ class Assinatura(models.Model):
         print(f"Assinatura {self.id} cancelada para o final do período. Acesso continua até {self.data_expiracao}.")
         # NÂO CHAMA revogar_acesso() AQUI. Isso será feito por uma tarefa agendada.
 
-    def revogar_acesso(self):
-        """
-        Lógica de negócio para desativar o acesso do usuário no seu sistema.
-        Este método deve ser chamado apenas quando o acesso precisa ser CORTADO DE FATO.
-        """
-        print(f"Acesso de {self.usuario.nome_completo} revogado para o plano {self.plano.nome_plano}.")
-        if hasattr(self.usuario, 'user') and self.usuario.user:
-            self.usuario.user.is_active = False # Desativa o usuário do Django.
-            self.usuario.user.save()
-            print(f"auth.User '{self.usuario.user.username}' desativado.")
-            # Opcional: Remover do grupo "Clientes Assinantes" aqui se for a única maneira de perder acesso.
-            self.usuario.user.groups.remove(Group.objects.get(name='Clientes Assinantes'))
-            self.usuario.user.save()
+    # def revogar_acesso(self):
+    #     """
+    #     Lógica de negócio para desativar o acesso do usuário no seu sistema.
+    #     Este método deve ser chamado apenas quando o acesso precisa ser CORTADO DE FATO.
+    #     """
+    #     print(f"Acesso de {self.usuario.nome_completo} revogado para o plano {self.plano.nome_plano}.")
+    #     if hasattr(self.usuario, 'user') and self.usuario.user:
+    #         self.usuario.user.is_active = False # Desativa o usuário do Django.
+    #         self.usuario.user.save()
+    #         print(f"auth.User '{self.usuario.user.username}' desativado.")
+    #         # Opcional: Remover do grupo "Clientes Assinantes" aqui se for a única maneira de perder acesso.
+    #         self.usuario.user.groups.remove(Group.objects.get(name='Clientes Assinantes'))
+    #         self.usuario.user.save()
 
 
     def conceder_acesso(self):
         """
         Lógica para automatizar a concessão de acesso ao sistema para o cliente.
-        Esta função será chamada quando a assinatura for 'active' ou 'trialing'.
+        Este método faz duas chamadas de API: uma para o orquestrador de templates
+        e outra para a nova instância do cliente.
         """
         print(f"Chamando conceder_acesso para {self.usuario.nome_completo} ({self.usuario.email})")
 
-        auth_user = None
-        try:
-            auth_user = self.usuario.user 
-        except ObjectDoesNotExist:
-            auth_user = None
-        
-        # Gera a senha antes de criar/atualizar o usuário, para que ela possa ser usada no e-mail.
-        generated_password =  generate_random_password()# senha_chumbada()
-        
-
-        if not auth_user:
-            auth_user = User.objects.create_user(
-                username=self.usuario.email,
-                email=self.usuario.email,
-                password=generated_password, # A senha gerada será hashed aqui.
-                is_active=True,
-                is_staff=True,
-                is_superuser=False
+        # Passo 1: Provisionar a nova instância se ela ainda não existir
+        if not self.barbearia.instance_url:
+            print("INFO: URL da instância não encontrada. Iniciando o provisionamento...")
+            
+            nova_instancia_url = provisionar_instancia(
+                barbearia_id=self.barbearia.pk,
+                barbearia_nome=self.barbearia.nome_barbearia,
+                usuario_email=self.usuario.email,
+                stripe_subscription_id=self.stripe_subscription_id,
             )
-            self.usuario.user = auth_user
-            self.usuario.save()
-            print(f"DEBUG: Novo auth.User criado e vinculado para {self.usuario.email}.")
-
-        else: # Se o 'auth.User' já existia.
-            print(f"DEBUG: auth.User existente encontrado para {self.usuario.email}.")
-            if not auth_user.is_active:
-                auth_user.is_active = True
-                print(f"DEBUG: auth.User '{auth_user.username}' reativado.")
-
-            # Define a NOVA senha (ela será hashed) para o usuário existente.
-            auth_user.set_password(generated_password)
-            auth_user.save()
-
-            if auth_user.is_superuser:
-                auth_user.is_superuser = False
-                auth_user.save()
-                print(f"AVISO: Permissões de staff/superuser para {self.usuario.email} resetadas.")
+            
+            if not nova_instancia_url:
+                print("ERRO CRÍTICO: Falha ao provisionar a instância. Abortando concessão de acesso.")
+                return
+                
+            self.barbearia.instance_url = nova_instancia_url
+            self.barbearia.save()
+            print(f"DEBUG: URL da instância salva: {self.barbearia.instance_url}")
         
-        # 2. Adicionar o 'auth.User' ao grupo "Clientes Assinantes".
+        # Passo 2: Enviar as credenciais e o e-mail para a nova instância
+        instance_url = self.barbearia.instance_url
+        generated_password = generate_random_password()
+        
+        # Prepara o payload para a chamada de API na nova instância
+        provision_api_url = f"{instance_url}/api/v1/provision_user/"
+        api_payload = {
+            'email': self.usuario.email,
+            'password': generated_password,
+            'nome_completo': self.usuario.nome_completo,
+            'stripe_customer_id': self.usuario.stripe_customer_id,
+            'stripe_subscription_id': self.stripe_subscription_id,
+            'barbearia_nome': self.barbearia.nome_barbearia,
+        }
+        
+        # Prepara os headers com a chave de autenticação
+        crm_to_template_api_key = getattr(settings, 'CRM_TO_TEMPLATE_API_KEY', None)
+        if not crm_to_template_api_key:
+            print("ERRO CRÍTICO: CRM_TO_TEMPLATE_API_KEY não configurada.")
+            return
+            
+        api_headers = {
+            'Authorization': f'Token {crm_to_template_api_key}',
+            'Content-Type': 'application/json',
+        }
+
         try:
-            group = Group.objects.get(name='Clientes Assinantes')
-            if not auth_user.groups.filter(name='Clientes Assinantes').exists():
-                auth_user.groups.add(group)
-                print(f"DEBUG: auth.User '{auth_user.username}' adicionado ao grupo '{group.name}'.")
-            else:
-                print(f"DEBUG: auth.User '{auth_user.username}' já está no grupo '{group.name}'.")
-        except Group.DoesNotExist:
-            print("ERRO CRÍTICO: Grupo 'Clientes Assinantes' não encontrado. Crie-o no Admin do Django!")
-            return 
-
-        # 3. Enviar E-mail com as Credenciais.
-        # A URL de login será um placeholder por enquanto.
-        # SUBSTITUA PELA URL REAL DO PORTAL DO CLIENTE (NÃO DO DJANGO ADMIN).
-        login_url = "http://seusite.com/portal-cliente/login" 
-        
+            response = requests.post(provision_api_url, headers=api_headers, data=json.dumps(api_payload))
+            response.raise_for_status()
+            print(f"DEBUG: Chamada de API para provisionar usuário na instância {instance_url} bem-sucedida.")
+        except requests.exceptions.RequestException as e:
+            print(f"ERRO: Falha na chamada de API para provisionar usuário em {instance_url}: {e}")
+            # Se a chamada falhar, você pode adicionar uma lógica de recuperação ou notificação aqui.
+            
+        # Enviar E-mail com as Credenciais (para o Cliente)
+        login_url = f"{instance_url}/admin/"
         email_subject = "Suas Credenciais de Acesso ao BarberSites!"
-        
-        # Prepara o contexto para o template do e-mail.
         email_context = {
             'usuario_nome_completo': self.usuario.nome_completo,
             'usuario_email': self.usuario.email,
-            'usuario_senha': generated_password, # A senha em texto plano, APENAS para o envio do email.
-                                                    # NUNCA salve a senha em texto plano no banco de dados!
+            'usuario_senha': generated_password,
             'login_url': login_url,
         }
-        
-        # Renderiza o template HTML do e-mail.
         email_html_message = render_to_string('crm/emails/user_credentials.html', email_context)
         
-        send_mail(
-            subject=email_subject,
-            message="", 
-            html_message=email_html_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[self.usuario.email],
-            fail_silently=False, # Garante que exceções sejam levantadas.
-        )
-        print(f"DEBUG: E-mail de credenciais enviado para {self.usuario.email}.")
-        # --- FIM DA REMOÇÃO TEMPORÁRIA ---
+        try:
+            send_mail(
+                subject=email_subject,
+                message="",
+                html_message=email_html_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[self.usuario.email],
+                fail_silently=False,
+            )
+            print(f"DEBUG: E-mail de credenciais enviado para {self.usuario.email}.")
+        except Exception as e:
+            print(f"ERRO: Falha ao enviar e-mail de credenciais para {self.usuario.email}: {e}")
+            # Adicione lógica de notificação ou tentativa de reenvio aqui, se necessário.
         
         print("DEBUG: Método conceder_acesso concluído.")
+
+
+    def cancelar_assinatura_via_api(self, cancel_at_period_end_flag=False):
+        """
+        Método para processar um cancelamento iniciado pela API.
+        Ele decidirá se o cancelamento é imediato ou no final do período.
+        """
+        print(f"DEBUG: Cancelamento da assinatura {self.id} solicitado via API.")
+
+        # A lógica para a revogação de acesso (desativar o User)
+        # será de responsabilidade do outro sistema.
+        # Nós apenas atualizamos nosso banco de dados mestre.
+
+        if cancel_at_period_end_flag:
+            # Se a flag for True, o acesso continua até o final do período pago.
+            self.marcar_cancelada_ao_final_do_periodo()
+            return "Assinatura marcada para cancelamento no final do período."
+        else:
+            # Se a flag for False, o cancelamento é imediato.
+            self.marcar_cancelada_imediatamente()
+            return "Assinatura cancelada imediatamente."

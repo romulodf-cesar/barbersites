@@ -5,8 +5,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Nova URL para listar todos os planos disponíveis
-    path('plans/', views.list_plans, name='list_plans'),
     # URL para criar a sessão de checkout no Stripe para um plano específico.
     # Note que agora usamos 'plano_pk' para identificar o plano a ser assinado.
     path(
