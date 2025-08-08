@@ -5,10 +5,12 @@ from datetime import timedelta
 from django.utils import timezone # Importa timezone para trabalhar com datas e fusos horários.
 from django.contrib.auth.models import User, Group # Importa o modelo User e Group do sistema de autenticação do Django.
 from .utils import generate_random_password, provisionar_instancia # senha_chumbada # Importa a função de gerar senha aleatória que criamos em crm/utils.py.
+# from .utils_alpha import generate_random_password, provisionar_admin_em_instancia_mock
 from django.core.mail import send_mail # Importa send_mail para enviar e-mails.
 from django.conf import settings # Importa settings para acessar DEFAULT_FROM_EMAIL.
 from django.core.exceptions import ObjectDoesNotExist # Importa ObjectDoesNotExist para tratar caso o OneToOneField 'user' não exista.
 from django.template.loader import render_to_string # NOVO: Importa para renderizar templates de email.
+
 
 
 class Plano(models.Model):
@@ -479,7 +481,7 @@ class Assinatura(models.Model):
     #         self.usuario.user.groups.remove(Group.objects.get(name='Clientes Assinantes'))
     #         self.usuario.user.save()
 
-
+    # versão beta
     def conceder_acesso(self):
         """
         Lógica para automatizar a concessão de acesso ao sistema para o cliente.
@@ -512,24 +514,31 @@ class Assinatura(models.Model):
         generated_password = generate_random_password()
         
         # Prepara o payload para a chamada de API na nova instância
-        provision_api_url = f"{instance_url}/api/v1/provision_user/"
+        provision_api_url = f"{instance_url}/external/admin-users/"
         api_payload = {
+            'username': self.usuario.email.split('@')[0], # Eles esperam um username
             'email': self.usuario.email,
             'password': generated_password,
-            'nome_completo': self.usuario.nome_completo,
-            'stripe_customer_id': self.usuario.stripe_customer_id,
             'stripe_subscription_id': self.stripe_subscription_id,
-            'barbearia_nome': self.barbearia.nome_barbearia,
+            # O campo 'barbearia_nome' foi removido, pois não está no payload deles
         }
+        # api_payload = {
+        #     'email': self.usuario.email,
+        #     'password': generated_password,
+        #     'nome_completo': self.usuario.nome_completo,
+        #     'stripe_customer_id': self.usuario.stripe_customer_id,
+        #     'stripe_subscription_id': self.stripe_subscription_id,
+        #     'barbearia_nome': self.barbearia.nome_barbearia,
+        # }
         
         # Prepara os headers com a chave de autenticação
-        crm_to_template_api_key = getattr(settings, 'CRM_TO_TEMPLATE_API_KEY', None)
-        if not crm_to_template_api_key:
-            print("ERRO CRÍTICO: CRM_TO_TEMPLATE_API_KEY não configurada.")
+        template_api_key = getattr(settings, 'CRM_TO_TEMPLATE_API_KEY', None)
+        if not template_api_key:
+            print("ERRO CRÍTICO: CRM_TO_TEMPLATE_API_KEY não configurada no settings.py do CRM.")
             return
             
         api_headers = {
-            'Authorization': f'Token {crm_to_template_api_key}',
+            'X-API-KEY': template_api_key, # Eles esperam este header
             'Content-Type': 'application/json',
         }
 
@@ -566,7 +575,47 @@ class Assinatura(models.Model):
             print(f"ERRO: Falha ao enviar e-mail de credenciais para {self.usuario.email}: {e}")
             # Adicione lógica de notificação ou tentativa de reenvio aqui, se necessário.
         
-        print("DEBUG: Método conceder_acesso concluído.")
+    # #     print("DEBUG: Método conceder_acesso versão alpha.")
+    # def conceder_acesso(self):
+    #     """
+    #     Lógica para automatizar a concessão de acesso ao sistema para o cliente
+    #     na versão Alpha para apresentação.
+    #     """
+    #     print(f"Chamando conceder_acesso para {self.usuario.nome_completo} ({self.usuario.email})")
+
+    #     # A URL da instância já foi atribuída no momento da criação da barbearia
+    #     instancia_url = self.barbearia.instance_url
+        
+    #     if not instancia_url:
+    #         print("ERRO CRÍTICO: URL da instância não encontrada. Abortando.")
+    #         return
+
+    #     api_key = "SUA_API_KEY_AQUI"
+    #     generated_password = generate_random_password()
+    #     username = self.usuario.email.split('@')[0]
+    #     email = self.usuario.email
+    #     stripe_subscription_id = self.stripe_subscription_id
+
+    #     if provisionar_admin_em_instancia_mock(instancia_url, api_key, username, email, generated_password, stripe_subscription_id):
+    #         login_url = f"{instancia_url}/admin/"
+    #         email_subject = "Suas Credenciais de Acesso ao BarberSites!"
+    #         email_context = {
+    #             'usuario_nome_completo': self.usuario.nome_completo,
+    #             'usuario_email': email,
+    #             'usuario_senha': generated_password,
+    #             'login_url': login_url,
+    #         }
+    #         email_html_message = render_to_string('crm/emails/user_credentials.html', email_context)
+
+    #         try:
+    #             send_mail(subject=email_subject, message="", html_message=email_html_message, from_email=settings.DEFAULT_FROM_EMAIL, recipient_list=[email], fail_silently=False)
+    #             print(f"DEBUG: E-mail de credenciais enviado para {email}.")
+    #         except Exception as e:
+    #             print(f"ERRO: Falha ao enviar e-mail de credenciais para {email}: {e}")
+    #     else:
+    #         print("ERRO: O provisionamento na instância mock falhou. E-mail de credenciais não enviado.")
+        
+    #     print("DEBUG: Método conceder_acesso concluído.")
 
 
     def cancelar_assinatura_via_api(self, cancel_at_period_end_flag=False):

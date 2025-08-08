@@ -1,32 +1,37 @@
-# payments/views.py
+# payments/views_alpha.py (VERSÃO ALPHA)
 
-# Importações necessárias
-import stripe # Biblioteca oficial do Stripe para Python.
-import json # Para trabalhar com dados JSON (usado para requisições do frontend).
-from django.conf import settings # Para acessar configurações do seu settings.py (como chaves da API do Stripe).
-from django.shortcuts import render, get_object_or_404, redirect # Funções utilitárias do Django para renderizar templates, buscar objetos ou redirecionar.
-from django.http import JsonResponse, HttpResponse # Para retornar respostas HTTP em formato JSON ou status simples.
-from django.views.decorators.csrf import csrf_exempt # Decorador para desativar a proteção CSRF em views específicas (webhooks, AJAX).
-from django.urls import reverse # Para gerar URLs dinamicamente com base nos nomes das rotas.
+import json
+import stripe
+import requests
+from django.conf import settings
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse
+from datetime import datetime, timezone
+from crm.models import Plano, Usuario, Barbearia, Assinatura 
+from crm.forms import UsuarioForm, BarbeariaForm
+from crm.utils_alpha import provisionar_admin_em_instancia_mock, generate_random_password# Importe a nova função
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 
-# IMPORTANTE: Importa os modelos do app 'crm', pois são eles que guardam os dados de Plano, Usuário, Barbearia e Assinatura.
-from crm.models import Plano, Usuario, Barbearia, Assinatura
-# NOVO: Importa os formulários Django que criamos para Usuario e Barbearia (do app crm).
-from crm.forms import UsuarioForm, BarbeariaForm 
 
-# from crm.utils import provisionar_instancia
+# Defina as URLs mockadas para a apresentação
+MOCK_INSTANCE_URLS = [
+    "http://instancia-mock-1.com",
+    "http://instancia-mock-2.com",
+    "http://instancia-mock-3.com",
+]
 
-from datetime import datetime, timezone # Módulo para trabalhar com datas e fusos horários (necessário para timestamps do Stripe).
-
-# Configura a chave secreta do Stripe.
-# Esta chave autentica suas requisições para a API do Stripe no backend.
-# A chave é lida de settings.STRIPE_SECRET_KEY, que por sua vez, é configurada em seu arquivo .env.
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # ----------------------------------------------------------------------
-# 1. View para exibir a lista de planos na página inicial
-#    (Pode ser sua landing page ou uma página dedicada aos planos)
+# Views de Pagamento (Adaptadas para a Versão Alpha)
 # ----------------------------------------------------------------------
+def list_plans(request):
+    planos = Plano.objects.all().order_by('valor')
+    context = {'planos': planos, 'STRIPE_PUBLIC_KEY': settings.STRIPE_PUBLIC_KEY}
+    return render(request, 'payments/list_plans.html', context)
 
 @csrf_exempt
 def create_checkout_session(request, plano_pk):
@@ -34,74 +39,54 @@ def create_checkout_session(request, plano_pk):
     if request.method == 'POST':
         if not plano.stripe_price_id:
             return JsonResponse({'error': 'Este plano não tem um ID de preço configurado no Stripe.'}, status=400)
-        
         try:
             data = json.loads(request.body)
             usuario_data = data.get('usuario_data')
             barbearia_data = data.get('barbearia_data')
-            
-            # Não fazemos validação do UsuarioForm aqui para permitir e-mails duplicados
+            usuario_form_validation = UsuarioForm(data=usuario_data)
             barbearia_form_validation = BarbeariaForm(data=barbearia_data)
-            
-            if barbearia_form_validation.is_valid():
+            if usuario_form_validation.is_valid() and barbearia_form_validation.is_valid():
+                usuario_cleaned_data = usuario_form_validation.cleaned_data
                 barbearia_cleaned_data = barbearia_form_validation.cleaned_data
-                
-                # --- LÓGICA ROBUSTA PARA ENCONTRAR OU CRIAR USUÁRIO ---
                 try:
-                    # Se o usuário já existe, nós o encontramos.
-                    usuario = Usuario.objects.get(email=usuario_data['email'])
-                    print("DEBUG: Usuário existente encontrado.")
+                    usuario = Usuario.objects.get(email=usuario_cleaned_data['email'])
+                    usuario.nome_completo = usuario_cleaned_data['nome_completo']
+                    usuario.telefone = usuario_cleaned_data['telefone']
+                    usuario.aceite_termos = usuario_cleaned_data.get('aceite_termos', False)
+                    usuario.receber_notificacoes = usuario_cleaned_data.get('receber_notificacoes', False)
+                    usuario.save()
+                    print("DEBUG: Usuário existente atualizado com sucesso.")
                 except Usuario.DoesNotExist:
-                    # Se o usuário não existe, nós o criamos.
                     usuario = Usuario.objects.create(
-                        email=usuario_data['email'],
-                        nome_completo=usuario_data['nome_completo'],
-                        telefone=usuario_data['telefone'],
-                        aceite_termos=usuario_data.get('aceite_termos', False),
-                        receber_notificacoes=usuario_data.get('receber_notificacoes', False)
-                    )
+                        email=usuario_cleaned_data['email'], nome_completo=usuario_cleaned_data['nome_completo'], telefone=usuario_cleaned_data['telefone'], aceite_termos=usuario_cleaned_data.get('aceite_termos', False), receber_notificacoes=usuario_cleaned_data.get('receber_notificacoes', False))
                     print("DEBUG: Novo usuário criado com sucesso.")
-                # --- FIM DA LÓGICA PARA USUÁRIO ---
-
-                # Lógica para Barbearia
-                barbearia = Barbearia.objects.create(
-                    nome_barbearia=barbearia_cleaned_data['nome_barbearia'],
-                    endereco=barbearia_cleaned_data['endereco'],
-                    cidade=barbearia_cleaned_data['cidade'],
-                    estado=barbearia_cleaned_data['estado'],
-                    cep=barbearia_cleaned_data['cep'],
-                    usuario_responsavel=usuario,
-                )
-                print(f"DEBUG: Nova Barbearia '{barbearia.nome_barbearia}' criada com sucesso.")
                 
+                # Lógica de atribuição da URL mockada
+                barbearia_count = Barbearia.objects.count()
+                url_index = barbearia_count % len(MOCK_INSTANCE_URLS)
+                allocated_url = MOCK_INSTANCE_URLS[url_index]
+                
+                barbearia, _ = Barbearia.objects.get_or_create(nome_barbearia=barbearia_cleaned_data['nome_barbearia'], defaults={'endereco': barbearia_cleaned_data['endereco'], 'cidade': barbearia_cleaned_data['cidade'], 'estado': barbearia_cleaned_data['estado'], 'cep': barbearia_cleaned_data['cep'], 'usuario_responsavel': usuario, 'instance_url': allocated_url})
                 customer_stripe_id = usuario.stripe_customer_id
                 session_params = {'line_items': [{'price': plano.stripe_price_id, 'quantity': 1}], 'mode': 'subscription', 'success_url': request.build_absolute_uri(reverse('payment_success')) + '?session_id={CHECKOUT_SESSION_ID}', 'cancel_url': request.build_absolute_uri(reverse('payment_cancel')), 'metadata': {'barbearia_nome': barbearia_data['nome_barbearia'], 'usuario_email_origem': usuario_data['email']}}
-                
                 if customer_stripe_id:
                     session_params['customer'] = customer_stripe_id
                 else:
                     session_params['customer_email'] = usuario.email
-                
                 if plano.trial_period_days > 0:
                     session_params['subscription_data'] = {'trial_period_days': plano.trial_period_days}
-                
                 checkout_session = stripe.checkout.Session.create(**session_params)
-                
                 if not usuario.stripe_customer_id and checkout_session.customer:
                     usuario.stripe_customer_id = checkout_session.customer
                     usuario.save()
                     print(f"DEBUG: stripe_customer_id salvo para o usuário {usuario.id}.")
-                
                 return JsonResponse({'id': checkout_session.id})
-            
             else:
-                errors = {'barbearia_errors': barbearia_form_validation.errors.as_json()}
+                errors = {'usuario_errors': usuario_form_validation.errors.as_json(), 'barbearia_errors': barbearia_form_validation.errors.as_json()}
                 return JsonResponse({'error': 'Dados do formulário inválidos.', 'details': errors}, status=400)
-        
         except Exception as e:
             print(f"ERRO ao criar sessão de checkout: {e}")
             return JsonResponse({'error': str(e)}, status=400)
-    
     return JsonResponse({'error': 'Método não permitido.'}, status=405)
 
 def payment_success(request):
@@ -124,9 +109,7 @@ def checkout_page(request, plano_pk):
     context = {'plano': plano, 'STRIPE_PUBLIC_KEY': settings.STRIPE_PUBLIC_KEY, 'usuario_form': usuario_form_display, 'barbearia_form': barbearia_form_display}
     return render(request, 'payments/checkout.html', context)
 
-# ----------------------------------------------------------------------
-# View de Webhook do Stripe (REVISADA E CORRIGIDA)
-# ----------------------------------------------------------------------
+
 @csrf_exempt
 def stripe_webhook(request):
     payload = request.body
@@ -160,11 +143,7 @@ def stripe_webhook(request):
                 stripe_subscription_obj = stripe.Subscription.retrieve(subscription_id)
                 
                 usuario = Usuario.objects.get(email=customer_email)
-                barbearia_nome_do_metadata = session.metadata.get('barbearia_nome')
-                barbearia = Barbearia.objects.get(
-                    nome_barbearia=barbearia_nome_do_metadata,
-                    usuario_responsavel=usuario
-                )
+                barbearia = Barbearia.objects.get(nome_barbearia=session.metadata.get('barbearia_nome'))
                 line_items_from_session = stripe.checkout.Session.list_line_items(session.id)
                 plano = Plano.objects.get(stripe_price_id=line_items_from_session.data[0].price.id)
 
@@ -173,30 +152,13 @@ def stripe_webhook(request):
                     usuario.save()
                     print(f"DEBUG: stripe_customer_id salvo para o usuário {usuario.id}.")
                 
-                # Campos que serão sempre preenchidos
                 status_assinatura = getattr(stripe_subscription_obj, 'status', None)
                 cancel_at_period_end = getattr(stripe_subscription_obj, 'cancel_at_period_end', False)
                 subscription_created = getattr(stripe_subscription_obj, 'created', None)
-                data_inicio_dt = datetime.fromtimestamp(subscription_created, tz=timezone.utc) if subscription_created else None
-                
-                # Campos que podem ou não existir dependendo do tipo de assinatura
                 trial_end = getattr(stripe_subscription_obj, 'trial_end', None)
-                trial_end_dt = datetime.fromtimestamp(trial_end, tz=timezone.utc) if trial_end else None
                 
-                data_expiracao_dt = None
-                id_transacao = None
-
-                # LÓGICA CORRIGIDA E CONSOLIDADA:
-                # Se não houver período de teste, pegamos os dados de expiração e transação do próprio objeto `session` e `subscription`
-                if not trial_end_dt:
-                    # Tenta pegar a data de expiração da assinatura. Acesso defensivo para evitar erro 500
-                    current_period_end = getattr(stripe_subscription_obj, 'current_period_end', None)
-                    if current_period_end:
-                        data_expiracao_dt = datetime.fromtimestamp(current_period_end, tz=timezone.utc)
-
-                    # Tenta pegar o ID da transação.
-                    id_transacao = getattr(session, 'payment_intent', None)
-
+                data_inicio_dt = datetime.fromtimestamp(subscription_created, tz=timezone.utc) if subscription_created else None
+                trial_end_dt = datetime.fromtimestamp(trial_end, tz=timezone.utc) if trial_end else None
 
                 assinatura, created_sub = Assinatura.objects.get_or_create(
                     stripe_subscription_id=subscription_id,
@@ -207,21 +169,42 @@ def stripe_webhook(request):
                         'status_assinatura': status_assinatura,
                         'cancel_at_period_end': cancel_at_period_end,
                         'data_inicio': data_inicio_dt,
-                        'data_expiracao': data_expiracao_dt,
                         'trial_end': trial_end_dt,
-                        'id_transacao_pagamento': id_transacao,
                     }
                 )
                 
                 if created_sub:
                     print(f"DEBUG: Assinatura {assinatura.pk} criada com status {assinatura.status_assinatura}.")
-                    assinatura.conceder_acesso()
+                    
+                    # LÓGICA DE PROVISIONAMENTO DA VERSÃO ALPHA
+                    api_key = "SUA_API_KEY_AQUI"
+                    username = usuario.email.split('@')[0]
+                    password = generate_random_password()
+                    
+                    if provisionar_admin_em_instancia_mock(assinatura.barbearia.instance_url, api_key, username, usuario.email, password, assinatura.stripe_subscription_id):
+                        login_url = f"{assinatura.barbearia.instance_url}/admin/"
+                        email_subject = "Suas Credenciais de Acesso ao BarberSites!"
+                        email_context = {
+                            'usuario_nome_completo': usuario.nome_completo,
+                            'usuario_email': usuario.email,
+                            'usuario_senha': password,
+                            'login_url': login_url,
+                        }
+                        email_html_message = render_to_string('crm/emails/user_credentials.html', email_context)
+                        try:
+                            send_mail(subject=email_subject, message="", html_message=email_html_message, from_email=settings.DEFAULT_FROM_EMAIL, recipient_list=[usuario.email], fail_silently=False)
+                            print(f"DEBUG: E-mail de credenciais enviado para {usuario.email}.")
+                        except Exception as e:
+                            print(f"ERRO: Falha ao enviar e-mail de credenciais para {usuario.email}: {e}")
+                    else:
+                        print("ERRO: O provisionamento na instância mock falhou. E-mail de credenciais não enviado.")
+
                 else:
                     print(f"DEBUG: Assinatura {assinatura.pk} já existia. Apenas atualizada.")
             except Exception as e:
                 print(f"ERRO CRÍTICO no webhook checkout.session.completed: {e}")
                 return HttpResponse(status=500)
-
+    
     elif event['type'] == 'customer.subscription.updated':
         subscription = event['data']['object']
         subscription_id = subscription.id
@@ -230,12 +213,9 @@ def stripe_webhook(request):
             assinatura = Assinatura.objects.get(stripe_subscription_id=subscription_id)
             assinatura.status_assinatura = subscription.status
             assinatura.cancel_at_period_end = subscription.cancel_at_period_end
-            
-            # Atualiza data de expiração, que pode ser a do período de teste ou a do período de pagamento
             current_period_end = getattr(subscription, 'current_period_end', None)
             if current_period_end:
                 assinatura.data_expiracao = datetime.fromtimestamp(current_period_end, tz=timezone.utc)
-            
             assinatura.save()
             print(f"Assinatura {assinatura.pk} atualizada com sucesso.")
         except Assinatura.DoesNotExist:
@@ -258,27 +238,23 @@ def stripe_webhook(request):
     elif event['type'] == 'invoice.payment_succeeded':
         invoice = event['data']['object']
         print(f"Webhook: Invoice Payment Succeeded - Invoice ID: {invoice.id}")
-        
         if hasattr(invoice, 'subscription') and invoice.subscription:
             try:
                 assinatura = Assinatura.objects.get(stripe_subscription_id=invoice.subscription)
-                
-                # Acesso seguro aos campos para evitar erros
                 payment_intent = getattr(invoice, 'payment_intent', None)
+                period_start = getattr(invoice, 'period_start', None)
                 period_end = getattr(invoice, 'period_end', None)
-
-                # Atualiza os campos se os dados existirem e se a assinatura for a correta
-                assinatura.status_assinatura = 'active'
                 
+                assinatura.status_assinatura = 'active'
                 if payment_intent:
                     assinatura.id_transacao_pagamento = payment_intent
-                
+                if period_start:
+                    assinatura.data_inicio = datetime.fromtimestamp(period_start, tz=timezone.utc)
                 if period_end:
                     assinatura.data_expiracao = datetime.fromtimestamp(period_end, tz=timezone.utc)
                 
                 assinatura.save()
                 print(f"Assinatura {assinatura.pk} teve fatura paga com sucesso. Dados de transação e expiração atualizados.")
-                
             except Assinatura.DoesNotExist:
                 print(f"ERRO: Assinatura local com ID {invoice.subscription} não encontrada.")
                 return HttpResponse(status=404)
