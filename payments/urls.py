@@ -1,8 +1,8 @@
 # payments/urls.py
 
 from django.urls import path
-
-from . import views
+from . import views_alpha as views
+# from . import views
 
 urlpatterns = [
     # URL para criar a sessão de checkout no Stripe para um plano específico.

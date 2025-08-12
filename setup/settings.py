@@ -24,17 +24,27 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
+# Este é o bloco que lê as chaves de API e segredos
+# Primeiro, tenta ler das variáveis de ambiente do servidor (PythonAnywhere, por exemplo)
+# Se não encontrar (ambiente de desenvolvimento), ele tenta ler do .env local
+def get_env_variable(var_name, default=None):
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        # Se não estiver no ambiente, tenta carregar do .env local
+        from dotenv import load_dotenv
+        load_dotenv()
+        return os.environ.get(var_name, default)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', '')
-
-CRM_TO_TEMPLATE_API_KEY = os.getenv('CRM_TO_TEMPLATE_API_KEY', '')
+SECRET_KEY = get_env_variable('SECRET_KEY')
+CRM_TO_TEMPLATE_API_KEY = get_env_variable('CRM_TO_TEMPLATE_API_KEY')
+STRIPE_PUBLIC_KEY = get_env_variable('STRIPE_PUBLIC_KEY')
+STRIPE_SECRET_KEY = get_env_variable('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = get_env_variable('STRIPE_WEBHOOK_SECRET')
+DB_PASSWORD = get_env_variable('DB_PASSWORD')
+EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD')
 TEMPLATE_TO_CRM_API_KEY = os.getenv('TEMPLATE_TO_CRM_API_KEY', '')
 
-
-STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -52,7 +62,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Seus apps
-    'cms.apps.CmsConfig',
     'crm.apps.CrmConfig',
     'payments.apps.PaymentsConfig',
     'api.apps.ApiConfig',
@@ -113,7 +122,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'barbearia_db',
         'USER': 'root',
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),  #
+        'PASSWORD': DB_PASSWORD,  #
         'HOST': 'localhost',  # Ou o IP do seu servidor MySQL, se não for local
         'PORT': '3306',  # A porta padrão do MySQL. Mude se for diferente
         'OPTIONS': {
@@ -194,45 +203,13 @@ SPECTACULAR_SETTINGS = {
 # ----------------------------------------------------------------------
 # Configurações de E-mail
 # ----------------------------------------------------------------------
-# Define o backend de e-mail do Django. O 'smtp.EmailBackend' é o padrão para enviar via SMTP.
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' # Para desenvolvimento, use console para ver os e-mails no terminal.
-# Host do servidor SMTP (ex: 'smtp.gmail.com' para Gmail, ou o host do seu provedor).
-EMAIL_HOST = 'sandbox.smtp.mailtrap.io' 
-# Porta do servidor SMTP (geralmente 587 para TLS/STARTTLS, ou 465 para SSL).
-EMAIL_PORT = 2525
-# Habilita o uso de TLS (Transport Layer Security) para conexão segura. Essencial para a maioria dos servidores.
-EMAIL_USE_TLS = False
-# Habilita o uso de SSL (Secure Sockets Layer) para conexão segura. Use True se o seu servidor exigir SSL.
-EMAIL_USE_SSL = False 
-# Nome de usuário para autenticação no servidor SMTP (seu e-mail ou nome de usuário do provedor).
-EMAIL_HOST_USER = 'a70abeb14b42fa' 
-# Senha para autenticação no servidor SMTP.
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-
-
-# (Opcional) Assunto padrão para e-mails enviados pelo Django (ex: reset de senha).
-EMAIL_SUBJECT_PREFIX = '[BarberSites] ' 
-# (Opcional) Endereço de e-mail padrão para ser usado como remetente.
-DEFAULT_FROM_EMAIL = 'no-reply@barbersites.com.br' 
-
-# ----------------------------------------------------------------------
-# Para Testes e Desenvolvimento (MUITO RECOMENDADO USAR MAILTRAP OU CONSOLE BACKEND)
-# ----------------------------------------------------------------------
-# Se você estiver em DESENVOLVIMENTO, evite enviar e-mails reais. Use:
-# 1. Console Backend (e-mails aparecem no terminal do Django):
-#    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# 2. Mailtrap (ou serviço similar como MailHog):
-#    Mailtrap é um serviço gratuito para testar e-mails. Ele "pega" os e-mails e os mostra em uma caixa de entrada falsa.
-#    Substitua os dados de EMAIL_HOST, EMAIL_PORT, USER e PASSWORD pelos dados do seu Mailtrap.
-#    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-#    EMAIL_HOST = 'smtp.mailtrap.io' # Exemplo Mailtrap
-#    EMAIL_PORT = 2525 # Exemplo Mailtrap
-#    EMAIL_USE_TLS = True
-#    EMAIL_HOST_USER = 'SEU_USUARIO_MAILTRAP'
-#    EMAIL_HOST_PASSWORD = 'SUA_SENHA_MAILTRAP'
-
-# Em PRODUÇÃO, use as configurações do seu provedor de e-mail real.
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'apikey' # Nome de usuário padrão para a API Key
+EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD,
+DEFAULT_FROM_EMAIL = 'barbersites2025@gmail.com'
 
 
 # Internationalization

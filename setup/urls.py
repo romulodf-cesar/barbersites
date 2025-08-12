@@ -6,8 +6,8 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 
 urlpatterns = [
     path('admin/', admin.site.urls, name='admin'),
-    # path('payments/', include('payments.urls_alpha')),
-    path('payments/', include('payments.urls')),
+    path('payments/', include('payments.urls_alpha')),
+    # path('payments/', include('payments.urls')),
     path('api/', include('api.urls')),
 
     # URLs para o Swagger
