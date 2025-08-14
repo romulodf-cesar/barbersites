@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+load_dotenv() 
 from django.core.mail.backends.console import EmailBackend
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -39,7 +40,19 @@ TEMPLATE_TO_CRM_API_KEY = os.getenv('TEMPLATE_TO_CRM_API_KEY', '')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = get_env_variable("DEBUG", "false").lower() == "true"
 
-ALLOWED_HOSTS = ['barbersites.pythonanywhere.com']
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    "localhost,127.0.0.1,.vercel.app,rafaalmeidadev.pythonanywhere.com"
+).split(",")
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://*.vercel.app",
+]
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # Application definition

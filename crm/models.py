@@ -5,7 +5,7 @@ from datetime import timedelta
 from django.utils import timezone # Importa timezone para trabalhar com datas e fusos horários.
 from django.contrib.auth.models import User, Group # Importa o modelo User e Group do sistema de autenticação do Django.
 # from .utils import generate_random_password, provisionar_instancia # senha_chumbada # Importa a função de gerar senha aleatória que criamos em crm/utils.py.
-from .utils_alpha import generate_random_password, provisionar_admin_em_instancia_mock
+from .utils import generate_random_password, provisionar_admin_em_instancia_mock
 from django.core.mail import send_mail # Importa send_mail para enviar e-mails.
 from django.conf import settings # Importa settings para acessar DEFAULT_FROM_EMAIL.
 from django.core.exceptions import ObjectDoesNotExist # Importa ObjectDoesNotExist para tratar caso o OneToOneField 'user' não exista.
@@ -629,6 +629,7 @@ class Assinatura(models.Model):
                 'usuario_email': self.usuario.email,
                 'usuario_senha': generated_password,
                 'login_url': login_url,
+                'usuario_username': username,
             }
             email_html_message = render_to_string('crm/emails/user_credentials.html', email_context)
             try:
