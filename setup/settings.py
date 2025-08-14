@@ -26,26 +26,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Primeiro, tenta ler das variáveis de ambiente do servidor (PythonAnywhere, por exemplo)
 # Se não encontrar (ambiente de desenvolvimento), ele tenta ler do .env local
 def get_env_variable(var_name, default=None):
-    try:
-        return os.environ[var_name]
-    except KeyError:
-        # Se não estiver no ambiente, tenta carregar do .env local
-        from dotenv import load_dotenv
-        load_dotenv()
-        return os.environ.get(var_name, default)
+    return os.getenv(var_name, default)
 
 SECRET_KEY = get_env_variable('SECRET_KEY')
 CRM_TO_TEMPLATE_API_KEY = get_env_variable('CRM_TO_TEMPLATE_API_KEY')
 STRIPE_PUBLIC_KEY = get_env_variable('STRIPE_PUBLIC_KEY')
 STRIPE_SECRET_KEY = get_env_variable('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = get_env_variable('STRIPE_WEBHOOK_SECRET')
-DB_PASSWORD = get_env_variable('DB_PASSWORD')
-EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD')
 TEMPLATE_TO_CRM_API_KEY = os.getenv('TEMPLATE_TO_CRM_API_KEY', '')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = get_env_variable("DEBUG", "false").lower() == "true"
 
 ALLOWED_HOSTS = ['barbersites.pythonanywhere.com']
 
@@ -118,11 +110,11 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'BarberSites$default',
-        'USER': 'BarberSites',
-        'PASSWORD': DB_PASSWORD,  #
-        'HOST': 'BarberSites.mysql.pythonanywhere-services.com',  # Ou o IP do seu servidor MySQL, se não for local
-        'PORT': '3306',  # A porta padrão do MySQL. Mude se for diferente
+        'NAME': get_env_variable('DB_NAME'),
+        'USER': get_env_variable('DB_USER'),
+        'PASSWORD': get_env_variable('DB_PASSWORD'),  #
+        'HOST': get_env_variable('DB_URL'),  # Ou o IP do seu servidor MySQL, se não for local
+        'PORT': get_env_variable('DB_URL_PORT'),  # A porta padrão do MySQL. Mude se for diferente
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
@@ -211,9 +203,10 @@ SPECTACULAR_SETTINGS = {
 
 # Adicione a configuração da API Web do SendGrid
 # EMAIL_BACKEND = 'django_sendgrid_v5.SendgridBackend'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-SENDGRID_API_KEY = EMAIL_HOST_PASSWORD  # A mesma variável de ambiente que você já tem.
-DEFAULT_FROM_EMAIL = 'barbersites2025@gmail.com'
+EMAIL_BACKEND = get_env_variable('EMAIL_BACKEND')
+SENDGRID_API_KEY = get_env_variable('SENDGRID_API_KEY') # A mesma variável de ambiente que você já tem.
+DEFAULT_FROM_EMAIL = get_env_variable('DEFAULT_FROM_EMAIL')
+
 
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_HOST = 'smtp.mailtrap.io'
