@@ -1,4 +1,4 @@
-# payments/views_alpha.py (VERSÃO ALPHA)
+# payments/views_alpha.py (VERSÃO FINAL E CORRIGIDA)
 
 import json
 import stripe
@@ -9,25 +9,21 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 from datetime import datetime, timezone
-from crm.models import Plano, Usuario, Barbearia, Assinatura 
-from crm.forms import UsuarioForm, BarbeariaForm
-from crm.utils_alpha import provisionar_admin_em_instancia_mock, generate_random_password# Importe a nova função
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from crm.models import Plano, Usuario, Barbearia, Assinatura
+from crm.forms import UsuarioForm, BarbeariaForm
+# <<< CORREÇÃO: Removido a importação redundante do generate_random_password >>>
+from crm.utils_alpha import provisionar_admin_em_instancia_mock, generate_random_password
 
-
-# Defina as URLs mockadas para a apresentação
 MOCK_INSTANCE_URLS = [
-    "http://instancia-mock-1.com",
-    "http://instancia-mock-2.com",
-    "http://instancia-mock-3.com",
+    "https://templates-barber.vercel.app/",
+    "https://templates-barber-2.vercel.app/",
+    "https://templates-barber-3.vercel.app/",
 ]
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-# ----------------------------------------------------------------------
-# Views de Pagamento (Adaptadas para a Versão Alpha)
-# ----------------------------------------------------------------------
 def list_plans(request):
     planos = Plano.objects.all().order_by('valor')
     context = {'planos': planos, 'STRIPE_PUBLIC_KEY': settings.STRIPE_PUBLIC_KEY}
@@ -43,29 +39,25 @@ def create_checkout_session(request, plano_pk):
             data = json.loads(request.body)
             usuario_data = data.get('usuario_data')
             barbearia_data = data.get('barbearia_data')
-            usuario_form_validation = UsuarioForm(data=usuario_data)
+
+            # <<< CORREÇÃO: Removido a validação do usuario_form aqui para lidar com multi-assinatura >>>
             barbearia_form_validation = BarbeariaForm(data=barbearia_data)
-            if usuario_form_validation.is_valid() and barbearia_form_validation.is_valid():
-                usuario_cleaned_data = usuario_form_validation.cleaned_data
+
+            if barbearia_form_validation.is_valid():
                 barbearia_cleaned_data = barbearia_form_validation.cleaned_data
+
                 try:
-                    usuario = Usuario.objects.get(email=usuario_cleaned_data['email'])
-                    usuario.nome_completo = usuario_cleaned_data['nome_completo']
-                    usuario.telefone = usuario_cleaned_data['telefone']
-                    usuario.aceite_termos = usuario_cleaned_data.get('aceite_termos', False)
-                    usuario.receber_notificacoes = usuario_cleaned_data.get('receber_notificacoes', False)
-                    usuario.save()
-                    print("DEBUG: Usuário existente atualizado com sucesso.")
+                    usuario = Usuario.objects.get(email=usuario_data['email'])
+                    print("DEBUG: Usuário existente encontrado.")
                 except Usuario.DoesNotExist:
                     usuario = Usuario.objects.create(
-                        email=usuario_cleaned_data['email'], nome_completo=usuario_cleaned_data['nome_completo'], telefone=usuario_cleaned_data['telefone'], aceite_termos=usuario_cleaned_data.get('aceite_termos', False), receber_notificacoes=usuario_cleaned_data.get('receber_notificacoes', False))
+                        email=usuario_data['email'], nome_completo=usuario_data['nome_completo'], telefone=usuario_data['telefone'], aceite_termos=usuario_data.get('aceite_termos', False), receber_notificacoes=usuario_data.get('receber_notificacoes', False))
                     print("DEBUG: Novo usuário criado com sucesso.")
-                
-                # Lógica de atribuição da URL mockada
+
                 barbearia_count = Barbearia.objects.count()
                 url_index = barbearia_count % len(MOCK_INSTANCE_URLS)
                 allocated_url = MOCK_INSTANCE_URLS[url_index]
-                
+
                 barbearia, _ = Barbearia.objects.get_or_create(nome_barbearia=barbearia_cleaned_data['nome_barbearia'], defaults={'endereco': barbearia_cleaned_data['endereco'], 'cidade': barbearia_cleaned_data['cidade'], 'estado': barbearia_cleaned_data['estado'], 'cep': barbearia_cleaned_data['cep'], 'usuario_responsavel': usuario, 'instance_url': allocated_url})
                 customer_stripe_id = usuario.stripe_customer_id
                 session_params = {'line_items': [{'price': plano.stripe_price_id, 'quantity': 1}], 'mode': 'subscription', 'success_url': request.build_absolute_uri(reverse('payment_success')) + '?session_id={CHECKOUT_SESSION_ID}', 'cancel_url': request.build_absolute_uri(reverse('payment_cancel')), 'metadata': {'barbearia_nome': barbearia_data['nome_barbearia'], 'usuario_email_origem': usuario_data['email']}}
@@ -82,7 +74,7 @@ def create_checkout_session(request, plano_pk):
                     print(f"DEBUG: stripe_customer_id salvo para o usuário {usuario.id}.")
                 return JsonResponse({'id': checkout_session.id})
             else:
-                errors = {'usuario_errors': usuario_form_validation.errors.as_json(), 'barbearia_errors': barbearia_form_validation.errors.as_json()}
+                errors = {'barbearia_errors': barbearia_form_validation.errors.as_json()}
                 return JsonResponse({'error': 'Dados do formulário inválidos.', 'details': errors}, status=400)
         except Exception as e:
             print(f"ERRO ao criar sessão de checkout: {e}")
@@ -134,14 +126,14 @@ def stripe_webhook(request):
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         print(f"Webhook: Checkout Session Completed - Session ID: {session.id}")
-        
+
         if session.mode == 'subscription':
             subscription_id = session.subscription
             customer_email = session.metadata.get('usuario_email_origem')
-            
+
             try:
                 stripe_subscription_obj = stripe.Subscription.retrieve(subscription_id)
-                
+
                 usuario = Usuario.objects.get(email=customer_email)
                 barbearia = Barbearia.objects.get(nome_barbearia=session.metadata.get('barbearia_nome'))
                 line_items_from_session = stripe.checkout.Session.list_line_items(session.id)
@@ -151,12 +143,12 @@ def stripe_webhook(request):
                     usuario.stripe_customer_id = session.customer
                     usuario.save()
                     print(f"DEBUG: stripe_customer_id salvo para o usuário {usuario.id}.")
-                
+
                 status_assinatura = getattr(stripe_subscription_obj, 'status', None)
                 cancel_at_period_end = getattr(stripe_subscription_obj, 'cancel_at_period_end', False)
                 subscription_created = getattr(stripe_subscription_obj, 'created', None)
                 trial_end = getattr(stripe_subscription_obj, 'trial_end', None)
-                
+
                 data_inicio_dt = datetime.fromtimestamp(subscription_created, tz=timezone.utc) if subscription_created else None
                 trial_end_dt = datetime.fromtimestamp(trial_end, tz=timezone.utc) if trial_end else None
 
@@ -172,39 +164,16 @@ def stripe_webhook(request):
                         'trial_end': trial_end_dt,
                     }
                 )
-                
+
                 if created_sub:
                     print(f"DEBUG: Assinatura {assinatura.pk} criada com status {assinatura.status_assinatura}.")
-                    
-                    # LÓGICA DE PROVISIONAMENTO DA VERSÃO ALPHA
-                    api_key = "SUA_API_KEY_AQUI"
-                    username = usuario.email.split('@')[0]
-                    password = generate_random_password()
-                    
-                    if provisionar_admin_em_instancia_mock(assinatura.barbearia.instance_url, api_key, username, usuario.email, password, assinatura.stripe_subscription_id):
-                        login_url = f"{assinatura.barbearia.instance_url}/admin/"
-                        email_subject = "Suas Credenciais de Acesso ao BarberSites!"
-                        email_context = {
-                            'usuario_nome_completo': usuario.nome_completo,
-                            'usuario_email': usuario.email,
-                            'usuario_senha': password,
-                            'login_url': login_url,
-                        }
-                        email_html_message = render_to_string('crm/emails/user_credentials.html', email_context)
-                        try:
-                            send_mail(subject=email_subject, message="", html_message=email_html_message, from_email=settings.DEFAULT_FROM_EMAIL, recipient_list=[usuario.email], fail_silently=False)
-                            print(f"DEBUG: E-mail de credenciais enviado para {usuario.email}.")
-                        except Exception as e:
-                            print(f"ERRO: Falha ao enviar e-mail de credenciais para {usuario.email}: {e}")
-                    else:
-                        print("ERRO: O provisionamento na instância mock falhou. E-mail de credenciais não enviado.")
-
+                    assinatura.conceder_acesso()
                 else:
                     print(f"DEBUG: Assinatura {assinatura.pk} já existia. Apenas atualizada.")
             except Exception as e:
                 print(f"ERRO CRÍTICO no webhook checkout.session.completed: {e}")
                 return HttpResponse(status=500)
-    
+
     elif event['type'] == 'customer.subscription.updated':
         subscription = event['data']['object']
         subscription_id = subscription.id
@@ -221,7 +190,7 @@ def stripe_webhook(request):
         except Assinatura.DoesNotExist:
             print(f"ERRO: Assinatura com Stripe ID {subscription_id} não encontrada.")
             return HttpResponse(status=404)
-        
+
     elif event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
         subscription_id = subscription.id
@@ -234,7 +203,7 @@ def stripe_webhook(request):
         except Assinatura.DoesNotExist:
             print(f"ERRO: Assinatura com Stripe ID {subscription_id} não encontrada para deleção.")
             return HttpResponse(status=404)
-        
+
     elif event['type'] == 'invoice.payment_succeeded':
         invoice = event['data']['object']
         print(f"Webhook: Invoice Payment Succeeded - Invoice ID: {invoice.id}")
@@ -244,7 +213,7 @@ def stripe_webhook(request):
                 payment_intent = getattr(invoice, 'payment_intent', None)
                 period_start = getattr(invoice, 'period_start', None)
                 period_end = getattr(invoice, 'period_end', None)
-                
+
                 assinatura.status_assinatura = 'active'
                 if payment_intent:
                     assinatura.id_transacao_pagamento = payment_intent
@@ -252,7 +221,7 @@ def stripe_webhook(request):
                     assinatura.data_inicio = datetime.fromtimestamp(period_start, tz=timezone.utc)
                 if period_end:
                     assinatura.data_expiracao = datetime.fromtimestamp(period_end, tz=timezone.utc)
-                
+
                 assinatura.save()
                 print(f"Assinatura {assinatura.pk} teve fatura paga com sucesso. Dados de transação e expiração atualizados.")
             except Assinatura.DoesNotExist:

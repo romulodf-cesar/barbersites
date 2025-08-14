@@ -14,12 +14,10 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from django.core.mail.backends.console import EmailBackend
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -49,7 +47,7 @@ TEMPLATE_TO_CRM_API_KEY = os.getenv('TEMPLATE_TO_CRM_API_KEY', '')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['barbersites.pythonanywhere.com']
 
 
 # Application definition
@@ -120,10 +118,10 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'barbearia_db',
-        'USER': 'root',
+        'NAME': 'BarberSites$default',
+        'USER': 'BarberSites',
         'PASSWORD': DB_PASSWORD,  #
-        'HOST': 'localhost',  # Ou o IP do seu servidor MySQL, se não for local
+        'HOST': 'BarberSites.mysql.pythonanywhere-services.com',  # Ou o IP do seu servidor MySQL, se não for local
         'PORT': '3306',  # A porta padrão do MySQL. Mude se for diferente
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -203,13 +201,28 @@ SPECTACULAR_SETTINGS = {
 # ----------------------------------------------------------------------
 # Configurações de E-mail
 # ----------------------------------------------------------------------
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'apikey' # Nome de usuário padrão para a API Key
-EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD,
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.sendgrid.net'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'apikey' # Nome de usuário padrão para a API Key
+# EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD,
+# DEFAULT_FROM_EMAIL = 'barbersites2025@gmail.com'
+
+# Adicione a configuração da API Web do SendGrid
+# EMAIL_BACKEND = 'django_sendgrid_v5.SendgridBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+SENDGRID_API_KEY = EMAIL_HOST_PASSWORD  # A mesma variável de ambiente que você já tem.
 DEFAULT_FROM_EMAIL = 'barbersites2025@gmail.com'
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.mailtrap.io'
+# EMAIL_PORT = 2525
+# EMAIL_USE_TLS = False
+# EMAIL_USE_SSL = False
+# EMAIL_HOST_USER = 'a70abeb14b42fa'
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+# DEFAULT_FROM_EMAIL = 'barbersites2025@gmail.com'
 
 
 # Internationalization

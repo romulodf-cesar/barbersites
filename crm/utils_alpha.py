@@ -1,5 +1,3 @@
-# crm/utils_alpha.py
-
 import random
 import string
 import requests
@@ -32,12 +30,13 @@ def generate_random_password(length=12):
     random.shuffle(password_chars)
     return "".join(password_chars)
 
+# --- VERSÃO DE PRODUÇÃO (CHAMADA DE API REAL) ---
+# Use esta versão para tentar a comunicação real com o servidor Vercel.
 def provisionar_admin_em_instancia_mock(instancia_url, api_key, username, email, password, stripe_subscription_id):
     """
-    Envia as informações do novo admin para a API da instância mock.
-    Esta função é uma adaptação para a versão de apresentação.
+    Envia as informações do novo admin para a API da instância de templates.
     """
-    url = f"{instancia_url}/external/admin-users/"
+    url = f"{instancia_url}external/admin-users/"
     headers = {
         'X-API-KEY': api_key,
         'Content-Type': 'application/json',
@@ -51,12 +50,22 @@ def provisionar_admin_em_instancia_mock(instancia_url, api_key, username, email,
 
     try:
         response = requests.post(url, headers=headers, json=body)
-        if response.status_code == 201:
-            print(f"DEBUG: Admin {username} provisionado com sucesso na instância mock em {instancia_url}.")
-            return True
-        else:
-            print(f"ERRO: Falha ao provisionar admin na instância mock. Status: {response.status_code}, Resposta: {response.text}")
-            return False
+        response.raise_for_status() # Levanta um erro para status 4xx/5xx
+        print(f"DEBUG: Admin {username} provisionado com sucesso na instância em {instancia_url}.")
+        return True
     except requests.exceptions.RequestException as e:
-        print(f"ERRO: Falha na requisição para a instância mock: {e}")
+        print(f"ERRO: Falha ao provisionar admin na instância: {e}")
+        print(f"ERRO: Resposta da API (se disponível): {e.response.text if hasattr(e.response, 'text') else 'N/A'}")
         return False
+
+
+# --- VERSÃO MOCK (USADA SE A CONEXÃO REAL FALHAR) ---
+# Se a versão acima não funcionar devido a restrições do PythonAnywhere,
+# comente a função acima e descomente a função abaixo.
+# def provisionar_admin_em_instancia_mock(instancia_url, api_key, username, email, password, stripe_subscription_id):
+#     """
+#     Função mock para simular o provisionamento do admin na instância de templates.
+#     Retorna True para permitir que o fluxo de e-mail continue.
+#     """
+#     print(f"DEBUG MOCK: Simulação de provisionamento para {username} em {instancia_url}.")
+#     return True
