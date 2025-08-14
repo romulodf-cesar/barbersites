@@ -29,6 +29,40 @@
             width: 100%;
             z-index: 1030;
         }
+
+        /* Estilos para validação visual */
+        .is-valid {
+            border-color: #198754 !important;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25) !important;
+        }
+        
+        .is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+        }
+        
+        .form-control:focus.is-valid {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+        }
+        
+        .form-control:focus.is-invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        .validation-feedback {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .invalid-feedback {
+            color: #dc3545;
+        }
+        
+        .valid-feedback {
+            color: #198754;
+        }
     </style>
 
 </head>
@@ -73,24 +107,31 @@
                                 {{ usuario_form.nome_completo.label_tag }}
                                 {{ usuario_form.nome_completo }}
                                 {% if usuario_form.nome_completo.errors %}
-                                    <div class="text-danger small">{{ usuario_form.nome_completo.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ usuario_form.nome_completo.errors }}</div>
                                 {% endif %}
+                                <div class="valid-feedback">Nome válido!</div>
+                                <div class="invalid-feedback">Digite seu nome completo (nome e sobrenome).</div>
                             </div>
 
                             <div class="mb-3">
                                 {{ usuario_form.email.label_tag }}
                                 {{ usuario_form.email }}
                                 {% if usuario_form.email.errors %}
-                                    <div class="text-danger small">{{ usuario_form.email.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ usuario_form.email.errors }}</div>
                                 {% endif %}
+                                <div class="valid-feedback">Email válido!</div>
+                                <div class="invalid-feedback">Digite um email válido (exemplo@dominio.com).</div>
                             </div>
 
                             <div class="mb-3">
                                 {{ usuario_form.telefone.label_tag }}
                                 {{ usuario_form.telefone }}
                                 {% if usuario_form.telefone.errors %}
-                                    <div class="text-danger small">{{ usuario_form.telefone.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ usuario_form.telefone.errors }}</div>
                                 {% endif %}
+                                <div class="valid-feedback">Telefone válido!</div>
+                                <div class="invalid-feedback">Digite um telefone válido com DDD (10 ou 11 dígitos).</div>
+                                <small class="text-muted">Digite apenas números. Ex: 11987654321</small>
                             </div>
 
                             <hr class="my-4">
@@ -98,12 +139,11 @@
                             <!-- Dados da Barbearia -->
                             <h5 class="card-title fw-bold mb-3">Dados da Barbearia</h5>
 
-
                             <div class="mb-3">
                                 {{ barbearia_form.nome_barbearia.label_tag }}
                                 {{ barbearia_form.nome_barbearia }}
                                 {% if barbearia_form.nome_barbearia.errors %}
-                                    <div class="text-danger small">{{ barbearia_form.nome_barbearia.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ barbearia_form.nome_barbearia.errors }}</div>
                                 {% endif %}
                             </div>
 
@@ -111,7 +151,7 @@
                                 {{ barbearia_form.endereco.label_tag }}
                                 {{ barbearia_form.endereco }}
                                 {% if barbearia_form.endereco.errors %}
-                                    <div class="text-danger small">{{ barbearia_form.endereco.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ barbearia_form.endereco.errors }}</div>
                                 {% endif %}
                             </div>
 
@@ -120,14 +160,14 @@
                                     {{ barbearia_form.cidade.label_tag }}
                                     {{ barbearia_form.cidade }}
                                     {% if barbearia_form.cidade.errors %}
-                                        <div class="text-danger small">{{ barbearia_form.cidade.errors }}</div>
+                                        <div class="invalid-feedback d-block">{{ barbearia_form.cidade.errors }}</div>
                                     {% endif %}
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     {{ barbearia_form.estado.label_tag }}
                                     {{ barbearia_form.estado }}
                                     {% if barbearia_form.estado.errors %}
-                                        <div class="text-danger small">{{ barbearia_form.estado.errors }}</div>
+                                        <div class="invalid-feedback d-block">{{ barbearia_form.estado.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -136,16 +176,19 @@
                                 {{ barbearia_form.cep.label_tag }}
                                 {{ barbearia_form.cep }}
                                 {% if barbearia_form.cep.errors %}
-                                    <div class="text-danger small">{{ barbearia_form.cep.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ barbearia_form.cep.errors }}</div>
                                 {% endif %}
+                                <div class="valid-feedback">CEP válido!</div>
+                                <div class="invalid-feedback">Digite um CEP válido com 8 dígitos.</div>
+                                <small class="text-muted">Digite apenas números. Ex: 12345678</small>
                             </div>
 
                             <!-- Error Messages -->
                             {% if usuario_form.non_field_errors %}
-                                <div class="text-danger small">{{ usuario_form.non_field_errors }}</div>
+                                <div class="alert alert-danger">{{ usuario_form.non_field_errors }}</div>
                             {% endif %}
                             {% if barbearia_form.non_field_errors %}
-                                <div class="text-danger small">{{ barbearia_form.non_field_errors }}</div>
+                                <div class="alert alert-danger">{{ barbearia_form.non_field_errors }}</div>
                             {% endif %}
 
                             <hr class="my-4">
@@ -157,7 +200,7 @@
                                     Aceito os Termos de Uso
                                 </label>
                                 {% if usuario_form.aceite_termos.errors %}
-                                    <div class="text-danger small">{{ usuario_form.aceite_termos.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ usuario_form.aceite_termos.errors }}</div>
                                 {% endif %}
                             </div>
 
@@ -167,7 +210,7 @@
                                     Desejo receber notificações
                                 </label>
                                 {% if usuario_form.receber_notificacoes.errors %}
-                                    <div class="text-danger small">{{ usuario_form.receber_notificacoes.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ usuario_form.receber_notificacoes.errors }}</div>
                                 {% endif %}
                             </div>
 
@@ -253,12 +296,194 @@
         </div>
     </footer>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+
+    <!-- Script de Validação de Formulário -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Inicializa Stripe
             const stripe = Stripe('{{ STRIPE_PUBLIC_KEY }}');
             const checkoutForm = document.getElementById('checkout-form');
             const payButton = document.getElementById('pay-button');
+
+            // === FUNÇÕES DE VALIDAÇÃO E MÁSCARA ===
+
+            // Função para permitir apenas números
+            function onlyNumbers(event) {
+                const key = event.key;
+                const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter', 'Home', 'End'];
+                
+                // Permite teclas de controle
+                if (allowedKeys.includes(key) || event.ctrlKey || event.metaKey) {
+                    return true;
+                }
+                
+                // Impede caracteres não numéricos
+                if (!/[0-9]/.test(key)) {
+                    event.preventDefault();
+                    return false;
+                }
+                
+                return true;
+            }
+
+            // Função para aplicar máscara de CEP
+            function maskCEP(event) {
+                let value = event.target.value.replace(/\D/g, '');
+                
+                // Limita a 8 dígitos
+                if (value.length > 8) {
+                    value = value.substring(0, 8);
+                }
+                
+                // Aplica a máscara 99999-999
+                if (value.length > 5) {
+                    value = value.replace(/(\d{5})(\d{1,3})/, '$1-$2');
+                }
+                
+                event.target.value = value;
+            }
+
+            // Função para aplicar máscara de telefone
+            function maskTelefone(event) {
+                let value = event.target.value.replace(/\D/g, '');
+                
+                // Limita a 11 dígitos
+                if (value.length > 11) {
+                    value = value.substring(0, 11);
+                }
+                
+                // Aplica a máscara baseada no comprimento
+                if (value.length <= 10) {
+                    // Formato: (99)9999-9999
+                    if (value.length > 6) {
+                        value = value.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1)$2-$3');
+                    } else if (value.length > 2) {
+                        value = value.replace(/(\d{2})(\d{1,4})/, '($1)$2');
+                    } else if (value.length > 0) {
+                        value = value.replace(/(\d{1,2})/, '($1');
+                    }
+                } else {
+                    // Formato: (99)99999-9999
+                    value = value.replace(/(\d{2})(\d{5})(\d{1,4})/, '($1)$2-$3');
+                }
+                
+                event.target.value = value;
+            }
+
+            // Função para validação em tempo real do email
+            function validateEmail(event) {
+                const email = event.target.value;
+                const emailRegex = /^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/;
+                const emailField = event.target;
+                
+                // Remove classes de validação anteriores
+                emailField.classList.remove('is-valid', 'is-invalid');
+                
+                if (email.length > 0) {
+                    if (emailRegex.test(email)) {
+                        emailField.classList.add('is-valid');
+                    } else {
+                        emailField.classList.add('is-invalid');
+                    }
+                }
+            }
+
+            // === APLICAÇÃO DAS VALIDAÇÕES ===
+
+            const cepField = document.getElementById('id_cep');
+            const telefoneField = document.getElementById('id_telefone');
+            const emailField = document.getElementById('id_email');
+            const nomeField = document.getElementById('id_nome_completo');
+
+            // Campo CEP
+            if (cepField) {
+                cepField.addEventListener('keydown', onlyNumbers);
+                cepField.addEventListener('input', function(event) {
+                    maskCEP(event);
+                    const digits = event.target.value.replace(/\D/g, '');
+                    event.target.classList.remove('is-valid', 'is-invalid');
+                    
+                    if (digits.length > 0) {
+                        if (digits.length === 8) {
+                            event.target.classList.add('is-valid');
+                        } else {
+                            event.target.classList.add('is-invalid');
+                        }
+                    }
+                });
+                
+                // Impede colagem de texto não numérico
+                cepField.addEventListener('paste', function(event) {
+                    event.preventDefault();
+                    const paste = (event.clipboardData || window.clipboardData).getData('text');
+                    const numbersOnly = paste.replace(/\D/g, '');
+                    if (numbersOnly.length <= 8) {
+                        cepField.value = numbersOnly;
+                        maskCEP({ target: cepField });
+                    }
+                });
+            }
+
+            // Campo Telefone
+            if (telefoneField) {
+                telefoneField.addEventListener('keydown', onlyNumbers);
+                telefoneField.addEventListener('input', function(event) {
+                    maskTelefone(event);
+                    const digits = event.target.value.replace(/\D/g, '');
+                    event.target.classList.remove('is-valid', 'is-invalid');
+                    
+                    if (digits.length > 0) {
+                        if (digits.length === 10 || digits.length === 11) {
+                            event.target.classList.add('is-valid');
+                        } else {
+                            event.target.classList.add('is-invalid');
+                        }
+                    }
+                });
+                
+                // Impede colagem de texto não numérico
+                telefoneField.addEventListener('paste', function(event) {
+                    event.preventDefault();
+                    const paste = (event.clipboardData || window.clipboardData).getData('text');
+                    const numbersOnly = paste.replace(/\D/g, '');
+                    if (numbersOnly.length <= 11) {
+                        telefoneField.value = numbersOnly;
+                        maskTelefone({ target: telefoneField });
+                    }
+                });
+            }
+
+            // Campo Email
+            if (emailField) {
+                emailField.addEventListener('input', validateEmail);
+                emailField.addEventListener('blur', validateEmail);
+            }
+
+            // Validação do nome completo
+            if (nomeField) {
+                nomeField.addEventListener('input', function(event) {
+                    const nome = event.target.value;
+                    nomeField.classList.remove('is-valid', 'is-invalid');
+                    
+                    if (nome.length > 0) {
+                        // Verifica se tem pelo menos 2 palavras e apenas letras/espaços
+                        const palavras = nome.trim().split(/\s+/);
+                        const apenasLetras = /^[a-zA-ZÀ-ÿ\s]+$/.test(nome);
+                        
+                        if (palavras.length >= 2 && apenasLetras) {
+                            nomeField.classList.add('is-valid');
+                        } else {
+                            nomeField.classList.add('is-invalid');
+                        }
+                    }
+                });
+            }
+
+            // === FUNÇÕES ORIGINAIS DO STRIPE ===
 
             // Função para obter CSRF token
             function getCookie(name) {
@@ -276,30 +501,95 @@
                 return cookieValue;
             }
 
-            // Função para validar formulário
+            // Função para validar formulário - VERSÃO MELHORADA
             function validateForm() {
-                const requiredFields = [
-                    'id_nome_completo',
-                    'id_email',
-                    'id_telefone',
-                    'id_nome_barbearia',
-                    'id_endereco',
-                    'id_cidade',
-                    'id_estado',
-                    'id_cep'
-                ];
+                let isValid = true;
+                const errors = [];
 
-                for (let fieldId of requiredFields) {
-                    const field = document.getElementById(fieldId);
-                    if (!field || !field.value.trim()) {
-                        alert(`Por favor, preencha o campo ${field ? field.previousElementSibling.textContent : fieldId}`);
-                        return false;
+                // Validação do nome
+                const nome = document.getElementById('id_nome_completo');
+                if (nome) {
+                    const nomeValue = nome.value.trim();
+                    if (!nomeValue) {
+                        errors.push('Nome completo é obrigatório');
+                        isValid = false;
+                    } else if (nomeValue.split(/\s+/).length < 2) {
+                        errors.push('Digite seu nome completo (nome e sobrenome)');
+                        isValid = false;
+                    } else if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(nomeValue)) {
+                        errors.push('Nome deve conter apenas letras e espaços');
+                        isValid = false;
                     }
                 }
 
+                // Validação do email
+                const email = document.getElementById('id_email');
+                if (email) {
+                    const emailValue = email.value.trim();
+                    const emailRegex = /^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/;
+                    if (!emailValue) {
+                        errors.push('Email é obrigatório');
+                        isValid = false;
+                    } else if (!emailRegex.test(emailValue)) {
+                        errors.push('Digite um email válido no formato nome@dominio.com');
+                        isValid = false;
+                    }
+                }
+
+                // Validação do telefone
+                const telefone = document.getElementById('id_telefone');
+                if (telefone) {
+                    const telefoneDigits = telefone.value.replace(/\D/g, '');
+                    if (!telefoneDigits) {
+                        errors.push('Telefone é obrigatório');
+                        isValid = false;
+                    } else if (![10, 11].includes(telefoneDigits.length)) {
+                        errors.push('Telefone deve ter 10 ou 11 dígitos');
+                        isValid = false;
+                    } else if (telefoneDigits[0] === '0' || telefoneDigits[0] === '1') {
+                        errors.push('DDD inválido. Deve começar com dígito de 2 a 9');
+                        isValid = false;
+                    }
+                }
+
+                // Validação do CEP
+                const cep = document.getElementById('id_cep');
+                if (cep) {
+                    const cepDigits = cep.value.replace(/\D/g, '');
+                    if (!cepDigits) {
+                        errors.push('CEP é obrigatório');
+                        isValid = false;
+                    } else if (cepDigits.length !== 8) {
+                        errors.push('CEP deve ter exatamente 8 dígitos');
+                        isValid = false;
+                    }
+                }
+
+                // Validação dos outros campos obrigatórios
+                const requiredFields = [
+                    { id: 'id_nome_barbearia', name: 'Nome da Barbearia' },
+                    { id: 'id_endereco', name: 'Endereço' },
+                    { id: 'id_cidade', name: 'Cidade' },
+                    { id: 'id_estado', name: 'Estado' }
+                ];
+
+                for (let field of requiredFields) {
+                    const element = document.getElementById(field.id);
+                    if (!element || !element.value.trim()) {
+                        errors.push(`${field.name} é obrigatório`);
+                        isValid = false;
+                    }
+                }
+
+                // Validação dos termos
                 const aceiteTermos = document.getElementById('id_aceite_termos');
-                if (!aceiteTermos || !aceiteTermos.checked) {
-                    alert('Por favor, aceite os termos de uso para continuar.');
+                if (aceiteTermos && !aceiteTermos.checked) {
+                    errors.push('Você deve aceitar os termos de uso para continuar');
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    alert('Por favor, corrija os seguintes erros:\n\n• ' + errors.join('\n• '));
                     return false;
                 }
 
@@ -383,11 +673,6 @@
             });
         });
     </script>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
-        crossorigin="anonymous"></script>
 </body>
 
 </html>
